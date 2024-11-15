@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Endereco\Shopware6Client\Entity\CustomerAddress;
 
-use Endereco\Shopware6Client\Entity\EnderecoAddressExtension\EnderecoAddressExtensionDefinition;
-use Shopware\Core\Framework\DataAbstractionLayer\EntityExtension;
+use Endereco\Shopware6Client\Entity\EnderecoAddressExtension\CustomerAddress\EnderecoCustomerAddressExtensionDefinition;
 use Shopware\Core\Checkout\Customer\Aggregate\CustomerAddress\CustomerAddressDefinition;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityExtension;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\OneToOneAssociationField;
 use Shopware\Core\Framework\DataAbstractionLayer\FieldCollection;
 
@@ -15,7 +15,7 @@ class CustomerAddressExtension extends EntityExtension
     public const ENDERECO_EXTENSION = 'enderecoAddress';
 
     /**
-     * Extend the fields of the CustomerAddressDefinition with the EnderecoAddressExtensionDefinition.
+     * Extend the fields of the CustomerAddressDefinition with the EnderecoCustomerAddressExtensionDefinition.
      *
      * @param FieldCollection $collection The collection of fields to extend.
      */
@@ -26,7 +26,7 @@ class CustomerAddressExtension extends EntityExtension
                 self::ENDERECO_EXTENSION,
                 'id',
                 'address_id',
-                EnderecoAddressExtensionDefinition::class,
+                EnderecoCustomerAddressExtensionDefinition::class,
                 true
             )
         );
