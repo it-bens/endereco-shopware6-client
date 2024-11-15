@@ -11,6 +11,7 @@ use Endereco\Shopware6Client\Model\FailedAddressCheckResult;
 use Endereco\Shopware6Client\Model\SuccessfulAddressCheckResult;
 use Endereco\Shopware6Client\Service\AddressCheck\CountryCodeFetcherInterface;
 use Endereco\Shopware6Client\Service\AddressCheck\LocaleFetcherInterface;
+use Endereco\Shopware6Client\Service\AddressCheck\SubdivisionCodeFetcherInterface;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
@@ -23,7 +24,6 @@ use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\Plugin\PluginEntity as Plugin;
-use Shopware\Core\System\Country\Aggregate\CountryState\CountryStateEntity;
 use Shopware\Core\System\Country\CountryEntity;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -52,6 +52,8 @@ class EnderecoService
 
     private CountryCodeFetcherInterface $countryCodeFetcher;
 
+    private SubdivisionCodeFetcherInterface $subdivisionCodeFetcher;
+
     protected RequestStack $requestStack;
 
     public function __construct(
@@ -62,6 +64,7 @@ class EnderecoService
         EntityRepository $customerAddressRepository,
         LocaleFetcherInterface $localeFetcher,
         CountryCodeFetcherInterface $countryCodeFetcher,
+        SubdivisionCodeFetcherInterface $subdivisionCodeFetcher,
         RequestStack $requestStack,
         LoggerInterface $logger
     ) {
@@ -73,6 +76,7 @@ class EnderecoService
         $this->customerAddressRepository = $customerAddressRepository;
         $this->localeFetcher = $localeFetcher;
         $this->countryCodeFetcher = $countryCodeFetcher;
+        $this->subdivisionCodeFetcher = $subdivisionCodeFetcher;
         $this->requestStack = $requestStack;
 
         if (!is_null($requestStack->getMainRequest())) {
@@ -388,7 +392,7 @@ class EnderecoService
 
         // Set optional subdivisionCode
         if (!is_null($addressEntity->getCountryStateId())) {
-            $subdivisionCode = $this->getSubdivisionCodeById(
+            $subdivisionCode = $this->subdivisionCodeFetcher->fetchSubdivisionCodeByCountryStateId(
                 $addressEntity->getCountryStateId(),
                 $context
             );
@@ -945,34 +949,6 @@ class EnderecoService
 
         // If the country is not found or does not have more than one state, return false
         return false;
-    }
-
-    /**
-     * Fetches the ISO code of the subdivision (state) associated with a given subdivision ID.
-     *
-     * This method performs a search in the country state repository for a subdivision matching
-     * the provided ID. If a subdivision is found, its ISO code is retrieved, converted to uppercase,
-     * and returned. If no subdivision is found, an empty string is returned.
-     *
-     * @param string $subdivisionId The ID of the subdivision whose ISO code is to be fetched.
-     * @param Context $context The context which includes details of the event triggering this method.
-     *
-     * @return string The ISO code of the subdivision if found, or an empty string if not.
-     */
-    protected function getSubdivisionCodeById(string $subdivisionId, Context $context): string
-    {
-        /** @var CountryStateEntity|null $state */
-        $state = $this->countryStateRepository->search(new Criteria([$subdivisionId]), $context)->first();
-
-        // If a subdivision is found, get its ISO code and convert it to uppercase
-        // If no subdivision is found, default to an empty string
-        if ($state !== null) {
-            $stateCode = strtoupper($state->getShortCode());
-        } else {
-            $stateCode = '';
-        }
-
-        return $stateCode;
     }
 
     /**

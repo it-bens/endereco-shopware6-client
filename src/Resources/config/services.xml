@@ -36,6 +36,7 @@
             <argument type="service" id="customer_address.repository"/>
             <argument type="service" id="Endereco\Shopware6Client\Service\AddressCheck\LocaleFetcherInterface"/>
             <argument type="service" id="Endereco\Shopware6Client\Service\AddressCheck\CountryCodeFetcherInterface"/>
+            <argument type="service" id="Endereco\Shopware6Client\Service\AddressCheck\SubdivisionCodeFetcherInterface"/>
             <argument type="service" id="request_stack"/>
             <argument type="service" id="Endereco\Shopware6Client\Run\Logger" />
         </service>
@@ -60,6 +61,10 @@
         </service>
         <service alias="Endereco\Shopware6Client\Service\AddressCheck\LocaleFetcher" id="Endereco\Shopware6Client\Service\AddressCheck\LocaleFetcherInterface" />
 
+        <service id="Endereco\Shopware6Client\Service\AddressCheck\SubdivisionCodeFetcher" public="false">
+            <argument type="service" id="country_state.repository"/>
+        </service>
+        <service alias="Endereco\Shopware6Client\Service\AddressCheck\SubdivisionCodeFetcher" id="Endereco\Shopware6Client\Service\AddressCheck\SubdivisionCodeFetcherInterface" />
 
         <service id="Endereco\Shopware6Client\Run\LoggerFactory"/>
 
