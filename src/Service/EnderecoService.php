@@ -10,6 +10,7 @@ use Endereco\Shopware6Client\Model\AddressCheckResult;
 use Endereco\Shopware6Client\Model\FailedAddressCheckResult;
 use Endereco\Shopware6Client\Model\SuccessfulAddressCheckResult;
 use Endereco\Shopware6Client\Service\AddressCheck\CountryCodeFetcherInterface;
+use Endereco\Shopware6Client\Service\AddressCheck\CountryHasStatesCheckerInterface;
 use Endereco\Shopware6Client\Service\AddressCheck\LocaleFetcherInterface;
 use Endereco\Shopware6Client\Service\AddressCheck\SubdivisionCodeFetcherInterface;
 use Exception;
@@ -24,7 +25,6 @@ use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\Plugin\PluginEntity as Plugin;
-use Shopware\Core\System\Country\CountryEntity;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
@@ -35,8 +35,6 @@ class EnderecoService
     private Client $httpClient;
 
     private EntityRepository $pluginRepository;
-
-    private EntityRepository $countryRepository;
 
     private EntityRepository $countryStateRepository;
 
@@ -54,29 +52,31 @@ class EnderecoService
 
     private SubdivisionCodeFetcherInterface $subdivisionCodeFetcher;
 
+    private CountryHasStatesCheckerInterface $countryHasStatesChecker;
+
     protected RequestStack $requestStack;
 
     public function __construct(
         SystemConfigService $systemConfigService,
         EntityRepository $pluginRepository,
-        EntityRepository $countryRepository,
         EntityRepository $countryStateRepository,
         EntityRepository $customerAddressRepository,
         LocaleFetcherInterface $localeFetcher,
         CountryCodeFetcherInterface $countryCodeFetcher,
         SubdivisionCodeFetcherInterface $subdivisionCodeFetcher,
+        CountryHasStatesCheckerInterface $countryHasStatesChecker,
         RequestStack $requestStack,
         LoggerInterface $logger
     ) {
         $this->httpClient = new Client(['timeout' => 3.0, 'connection_timeout' => 2.0]);
         $this->systemConfigService = $systemConfigService;
         $this->pluginRepository = $pluginRepository;
-        $this->countryRepository = $countryRepository;
         $this->countryStateRepository = $countryStateRepository;
         $this->customerAddressRepository = $customerAddressRepository;
         $this->localeFetcher = $localeFetcher;
         $this->countryCodeFetcher = $countryCodeFetcher;
         $this->subdivisionCodeFetcher = $subdivisionCodeFetcher;
+        $this->countryHasStatesChecker = $countryHasStatesChecker;
         $this->requestStack = $requestStack;
 
         if (!is_null($requestStack->getMainRequest())) {
@@ -400,7 +400,7 @@ class EnderecoService
             if (!empty($subdivisionCode)) {
                 $payloadData['subdivisionCode'] = $subdivisionCode;
             }
-        } elseif ($this->isCountryWithSubdivisionsById($countryId, $context)) {
+        } elseif ($this->countryHasStatesChecker->hasCountryStates($countryId, $context)) {
             // If a state was not assigned, but it would have been possible, check it.
             // Maybe subdivision code must be enriched.
             $payloadData['subdivisionCode'] = '';
@@ -918,37 +918,6 @@ class EnderecoService
             }
         }
         return array_keys($accountableSessionIds);
-    }
-
-    /**
-     * Checks if a country, specified by its ID, has associated subdivisions (states).
-     *
-     * This method searches the country repository for a country that matches the provided ID.
-     * If the country is found, it checks if the country has any associated states.
-     * If the country has more than one associated state, it returns true, indicating that the
-     * country has subdivisions. If no states are associated or only one is present, it returns false.
-     *
-     * @param string $countryId The ID of the country to check for subdivisions.
-     * @param Context $context The context which includes details of the event triggering this method.
-     *
-     * @return bool True if the country has more than one subdivision, false otherwise.
-     */
-    public function isCountryWithSubdivisionsById(string $countryId, Context $context): bool
-    {
-        $criteria = new Criteria([$countryId]);
-        $criteria->addAssociation('states');
-
-        /** @var CountryEntity $country */
-        $country = $this->countryRepository->search($criteria, $context)->first();
-
-        // Check if the country was found and if it has more than one state
-        // If so, return true, indicating that the country has subdivisions
-        if (!is_null($country->getStates()) && $country->getStates()->count() > 1) {
-            return true;
-        }
-
-        // If the country is not found or does not have more than one state, return false
-        return false;
     }
 
     /**
