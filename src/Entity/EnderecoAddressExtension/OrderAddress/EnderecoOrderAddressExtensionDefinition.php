@@ -46,6 +46,16 @@ class EnderecoOrderAddressExtensionDefinition extends EnderecoBaseAddressExtensi
         return EnderecoOrderAddressExtensionEntity::class;
     }
 
+    /**
+     * Get the class of the collection.
+     *
+     * @return string The class of the collection.
+     */
+    public function getCollectionClass(): string
+    {
+        return EnderecoOrderAddressExtensionCollection::class;
+    }
+
     protected function defineFields(): FieldCollection
     {
         $fieldCollection = parent::defineFields();

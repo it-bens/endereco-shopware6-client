@@ -88,6 +88,16 @@
         <service id="Endereco\Shopware6Client\Service\OrderAddressToCustomerAddressDataMatcher" public="false"/>
         <service alias="Endereco\Shopware6Client\Service\OrderAddressToCustomerAddressDataMatcher" id="Endereco\Shopware6Client\Service\OrderAddressToCustomerAddressDataMatcherInterface" />
 
+        <service id="Endereco\Shopware6Client\Service\OrderCustomFieldsBuilder" public="false" />
+        <service alias="Endereco\Shopware6Client\Service\OrderCustomFieldsBuilder" id="Endereco\Shopware6Client\Service\OrderCustomFieldsBuilderInterface" />
+
+        <service id="Endereco\Shopware6Client\Service\OrdersCustomFieldsUpdater" public="false">
+            <argument type="service" id="order.repository" />
+            <argument type="service" id="Endereco\Shopware6Client\Service\OrderCustomFieldsBuilderInterface" />
+            <argument type="service" id="Shopware\Core\Framework\Api\Sync\SyncService"/>
+        </service>
+        <service alias="Endereco\Shopware6Client\Service\OrdersCustomFieldsUpdater" id="Endereco\Shopware6Client\Service\OrdersCustomFieldsUpdaterInterface" />
+
         <service id="Endereco\Shopware6Client\Run\LoggerFactory"/>
 
         <service id="Endereco\Shopware6Client\Run\Logger" class="Monolog\Logger">
@@ -111,6 +121,11 @@
             <argument type="service" id="country_state.repository"/>
             <argument type="service" id="Endereco\Shopware6Client\Service\AddressCheck\CountryCodeFetcherInterface" />
             <argument type="service" id="request_stack"/>
+        </service>
+
+        <service id="Endereco\Shopware6Client\Subscriber\OrderAddressExtensionWrittenSubscriber">
+            <tag name="kernel.event_subscriber"/>
+            <argument type="service" id="Endereco\Shopware6Client\Service\OrdersCustomFieldsUpdaterInterface" />
         </service>
     </services>
 </container>

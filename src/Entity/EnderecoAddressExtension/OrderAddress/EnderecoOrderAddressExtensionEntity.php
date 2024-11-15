@@ -113,4 +113,13 @@ class EnderecoOrderAddressExtensionEntity extends EnderecoBaseAddressExtensionEn
 
         return $data;
     }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function buildDataForOrderCustomField(): array
+    {
+        // The required data is currently the same. This might change in the future.
+        return $this->buildCartToOrderConversionData();
+    }
 }
