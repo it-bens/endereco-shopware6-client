@@ -9,6 +9,7 @@ use Endereco\Shopware6Client\Misc\EnderecoConstants;
 use Endereco\Shopware6Client\Model\AddressCheckResult;
 use Endereco\Shopware6Client\Model\FailedAddressCheckResult;
 use Endereco\Shopware6Client\Model\SuccessfulAddressCheckResult;
+use Endereco\Shopware6Client\Service\AddressCheck\CountryCodeFetcherInterface;
 use Endereco\Shopware6Client\Service\AddressCheck\LocaleFetcherInterface;
 use Exception;
 use GuzzleHttp\Client;
@@ -49,6 +50,8 @@ class EnderecoService
 
     private LocaleFetcherInterface $localeFetcher;
 
+    private CountryCodeFetcherInterface $countryCodeFetcher;
+
     protected RequestStack $requestStack;
 
     public function __construct(
@@ -58,6 +61,7 @@ class EnderecoService
         EntityRepository $countryStateRepository,
         EntityRepository $customerAddressRepository,
         LocaleFetcherInterface $localeFetcher,
+        CountryCodeFetcherInterface $countryCodeFetcher,
         RequestStack $requestStack,
         LoggerInterface $logger
     ) {
@@ -68,6 +72,7 @@ class EnderecoService
         $this->countryStateRepository = $countryStateRepository;
         $this->customerAddressRepository = $customerAddressRepository;
         $this->localeFetcher = $localeFetcher;
+        $this->countryCodeFetcher = $countryCodeFetcher;
         $this->requestStack = $requestStack;
 
         if (!is_null($requestStack->getMainRequest())) {
@@ -369,10 +374,7 @@ class EnderecoService
 
         // Set country
         $countryId = $addressEntity->getCountryId();
-        $countryCode = $this->getCountryCodeById(
-            $countryId,
-            $context
-        );
+        $countryCode = $this->countryCodeFetcher->fetchCountryCodeByCountryIdAndContext($countryId, $context);
         $payloadData['country'] = $countryCode;
 
         // Set postal code
@@ -586,7 +588,11 @@ class EnderecoService
             $buildingNumber = $addressData['extensions']['enderecoAddress']['houseNumber'];
 
             // If country is unknown, use Germany as default
-            $countryCode = $this->getCountryCodeById($addressData['countryId'], $context, 'DE');
+            $countryCode = $this->countryCodeFetcher->fetchCountryCodeByCountryIdAndContext(
+                $addressData['countryId'],
+                $context,
+                'DE'
+            );
 
             // Construct full street.
             $fullStreet = $this->buildFullStreet(
@@ -602,7 +608,7 @@ class EnderecoService
             $fullStreet = $addressData['street'];
 
             // If country is unknown, use Germany as default
-            $countryCode = $this->getCountryCodeById(
+            $countryCode = $this->countryCodeFetcher->fetchCountryCodeByCountryIdAndContext(
                 $addressData['countryId'],
                 $context,
                 'DE'
@@ -625,7 +631,11 @@ class EnderecoService
                 $buildingNumber = $addressData['extensions']['enderecoAddress']['houseNumber'];
 
                 // If country is unknown, use Germany as default
-                $countryCode = $this->getCountryCodeById($addressData['countryId'], $context, 'DE');
+                $countryCode = $this->countryCodeFetcher->fetchCountryCodeByCountryIdAndContext(
+                    $addressData['countryId'],
+                    $context,
+                    'DE'
+                );
 
                 // Construct full street.
                 $fullStreet = $this->buildFullStreet(
@@ -641,7 +651,7 @@ class EnderecoService
                 $fullStreet = $addressData['street'];
 
                 // If country is unknown, use Germany as default
-                $countryCode = $this->getCountryCodeById(
+                $countryCode = $this->countryCodeFetcher->fetchCountryCodeByCountryIdAndContext(
                     $addressData['countryId'],
                     $context,
                     'DE'
@@ -904,33 +914,6 @@ class EnderecoService
             }
         }
         return array_keys($accountableSessionIds);
-    }
-
-    /**
-     * Retrieves the ISO code of a country by its ID. If the country is not found or
-     * the country ID is missing, a default country code is returned.
-     *
-     * @param string $countryId The ID of the country.
-     * @param Context $context The current context.
-     * @param string $defaultCountryCode The default country code to use if the country is not found.
-     *
-     * @return string Returns the country's ISO code, or the default country code if the country is not found.
-     */
-    public function getCountryCodeById(string $countryId, Context $context, string $defaultCountryCode = 'DE')
-    {
-        /** @var CountryEntity|null $country */
-        $country = $this->countryRepository->search(new Criteria([$countryId]), $context)->first();
-
-        // Check if the country was found
-        if ($country !== null) {
-            // If country is found, get the ISO code
-            $countryCode = $country->getIso() ?? $defaultCountryCode;
-        } else {
-            // If no country is found, default to the provided default country code
-            $countryCode = $defaultCountryCode;
-        }
-
-        return $countryCode;
     }
 
     /**
