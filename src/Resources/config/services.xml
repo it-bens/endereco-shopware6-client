@@ -12,6 +12,14 @@
             <tag name="shopware.entity.extension"/>
         </service>
 
+        <service id="Endereco\Shopware6Client\Entity\EnderecoAddressExtension\OrderAddress\EnderecoOrderAddressExtensionDefinition">
+            <tag name="shopware.entity.definition"/>
+        </service>
+
+        <service id="Endereco\Shopware6Client\Entity\OrderAddress\OrderAddressExtension">
+            <tag name="shopware.entity.extension"/>
+        </service>
+
         <service id="Endereco\Shopware6Client\Controller\Api\ApiTestController" public="true">
             <argument type="service" id="Endereco\Shopware6Client\Service\EnderecoService" />
             <call method="setContainer">
