@@ -33,8 +33,8 @@
             <argument type="service" id="plugin.repository"/>
             <argument type="service" id="country.repository"/>
             <argument type="service" id="country_state.repository"/>
-            <argument type="service" id="sales_channel_domain.repository"/>
             <argument type="service" id="customer_address.repository"/>
+            <argument type="service" id="Endereco\Shopware6Client\Service\AddressCheck\LocaleFetcherInterface"/>
             <argument type="service" id="request_stack"/>
             <argument type="service" id="Endereco\Shopware6Client\Run\Logger" />
         </service>
@@ -48,7 +48,12 @@
             <argument type="service" id="plugin.repository"/>
             <tag name="kernel.event_subscriber" />
         </service>
-        
+
+        <service id="Endereco\Shopware6Client\Service\AddressCheck\LocaleFetcher" public="false">
+            <argument type="service" id="sales_channel_domain.repository"/>
+        </service>
+        <service alias="Endereco\Shopware6Client\Service\AddressCheck\LocaleFetcher" id="Endereco\Shopware6Client\Service\AddressCheck\LocaleFetcherInterface" />
+
         <service id="Endereco\Shopware6Client\Run\LoggerFactory"/>
 
         <service id="Endereco\Shopware6Client\Run\Logger" class="Monolog\Logger">

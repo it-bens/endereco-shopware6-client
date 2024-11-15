@@ -9,26 +9,25 @@ use Endereco\Shopware6Client\Misc\EnderecoConstants;
 use Endereco\Shopware6Client\Model\AddressCheckResult;
 use Endereco\Shopware6Client\Model\FailedAddressCheckResult;
 use Endereco\Shopware6Client\Model\SuccessfulAddressCheckResult;
+use Endereco\Shopware6Client\Service\AddressCheck\LocaleFetcherInterface;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
+use Psr\Log\LoggerInterface;
 use Shopware\Core\Checkout\Customer\Aggregate\CustomerAddress\CustomerAddressEntity;
 use Shopware\Core\Framework\Api\Context\SalesChannelApiSource;
-use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
-use Shopware\Core\System\Country\CountryEntity;
-use Shopware\Core\System\SystemConfig\SystemConfigService;
-use GuzzleHttp\Exception\RequestException;
 use Shopware\Core\Framework\Context;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
-use Psr\Log\LoggerInterface;
+use Shopware\Core\Framework\Plugin\PluginEntity as Plugin;
+use Shopware\Core\System\Country\Aggregate\CountryState\CountryStateEntity;
+use Shopware\Core\System\Country\CountryEntity;
+use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Throwable;
-use Symfony\Component\HttpFoundation\Session\Session;
-use Shopware\Core\System\SalesChannel\Aggregate\SalesChannelDomain\SalesChannelDomainEntity;
-use Shopware\Core\System\Country\Aggregate\CountryState\CountryStateEntity;
-use Shopware\Core\Framework\Plugin\PluginEntity as Plugin;
 
 class EnderecoService
 {
@@ -40,8 +39,6 @@ class EnderecoService
 
     private EntityRepository $countryStateRepository;
 
-    private EntityRepository $salesChannelDomainRepository;
-
     private EntityRepository $customerAddressRepository;
 
     private LoggerInterface $logger;
@@ -50,6 +47,8 @@ class EnderecoService
 
     private ?SessionInterface $session;
 
+    private LocaleFetcherInterface $localeFetcher;
+
     protected RequestStack $requestStack;
 
     public function __construct(
@@ -57,8 +56,8 @@ class EnderecoService
         EntityRepository $pluginRepository,
         EntityRepository $countryRepository,
         EntityRepository $countryStateRepository,
-        EntityRepository $salesChannelDomainRepository,
         EntityRepository $customerAddressRepository,
+        LocaleFetcherInterface $localeFetcher,
         RequestStack $requestStack,
         LoggerInterface $logger
     ) {
@@ -67,8 +66,8 @@ class EnderecoService
         $this->pluginRepository = $pluginRepository;
         $this->countryRepository = $countryRepository;
         $this->countryStateRepository = $countryStateRepository;
-        $this->salesChannelDomainRepository = $salesChannelDomainRepository;
         $this->customerAddressRepository = $customerAddressRepository;
+        $this->localeFetcher = $localeFetcher;
         $this->requestStack = $requestStack;
 
         if (!is_null($requestStack->getMainRequest())) {
@@ -192,55 +191,6 @@ class EnderecoService
                 $this->logger->warning('Serverside doConversion failed', ['error' => $e->getMessage()]);
             }
         }
-    }
-
-    /**
-     * Fetches the locale from the sales channel domain associated with a given sales channel ID.
-     *
-     * This method constructs a new criteria object and adds a filter to match the provided sales channel ID.
-     * It then uses this criteria to search the sales channel domain repository. The first matching
-     * sales channel domain is retrieved, and the locale of its language is fetched.
-     *
-     * The final returned string is a 2-character locale code.
-     *
-     * @param Context $context The context which includes details of the event triggering this method.
-     * @param string $salesChannelId The ID of the sales channel whose locale is to be fetched.
-     *
-     * @return string The 2-character locale code associated with the sales channel.
-     *
-     * @throws \RuntimeException If the sales channel with the provided ID cannot be found.
-     */
-    public function getLocaleFromSalesChannelId(Context $context, string $salesChannelId): string
-    {
-        $criteria = (new Criteria())
-            ->addFilter(new EqualsFilter('salesChannelId', $salesChannelId))
-            ->addAssociation('language.locale');
-
-        if (!empty($context->getLanguageId())) {
-            $criteria->addFilter(new EqualsFilter('languageId', $context->getLanguageId()));
-        }
-
-        /** @var SalesChannelDomainEntity|null $salesChannelDomain */
-        $salesChannelDomain = $this->salesChannelDomainRepository->search($criteria, $context)->first();
-
-        if (!$salesChannelDomain) {
-            throw new \RuntimeException(sprintf('Sales channel with id %s not found', $salesChannelId));
-        }
-
-        // Get the locale code from the sales channel
-        $language = $salesChannelDomain->getLanguage();
-        if ($language === null) {
-            throw new \RuntimeException('Language entity is not available.');
-        }
-
-        $locale = $language->getLocale();
-        if ($locale === null) {
-            throw new \RuntimeException('Locale entity is not available.');
-        }
-
-        $localeCode = substr($locale->getCode(), 0, 2);
-
-        return $localeCode;
     }
 
     /**
@@ -411,7 +361,7 @@ class EnderecoService
 
         // Set locale
         try {
-            $lang = $this->getLocaleFromSalesChannelId($context, $salesChannelId);
+            $lang = $this->localeFetcher->fetchLocaleBySalesChannelId($salesChannelId, $context);
         } catch (\Exception $e) {
             $lang = 'de'; // set "de" by default.
         }
