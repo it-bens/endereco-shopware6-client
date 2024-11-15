@@ -9,10 +9,8 @@ use Endereco\Shopware6Client\Misc\EnderecoConstants;
 use Endereco\Shopware6Client\Model\AddressCheckResult;
 use Endereco\Shopware6Client\Model\FailedAddressCheckResult;
 use Endereco\Shopware6Client\Model\SuccessfulAddressCheckResult;
+use Endereco\Shopware6Client\Service\AddressCheck\AddressCheckPayloadBuilderInterface;
 use Endereco\Shopware6Client\Service\AddressCheck\CountryCodeFetcherInterface;
-use Endereco\Shopware6Client\Service\AddressCheck\CountryHasStatesCheckerInterface;
-use Endereco\Shopware6Client\Service\AddressCheck\LocaleFetcherInterface;
-use Endereco\Shopware6Client\Service\AddressCheck\SubdivisionCodeFetcherInterface;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
@@ -46,13 +44,9 @@ class EnderecoService
 
     private ?SessionInterface $session;
 
-    private LocaleFetcherInterface $localeFetcher;
-
     private CountryCodeFetcherInterface $countryCodeFetcher;
 
-    private SubdivisionCodeFetcherInterface $subdivisionCodeFetcher;
-
-    private CountryHasStatesCheckerInterface $countryHasStatesChecker;
+    private AddressCheckPayloadBuilderInterface $addressCheckPayloadBuilder;
 
     protected RequestStack $requestStack;
 
@@ -61,10 +55,8 @@ class EnderecoService
         EntityRepository $pluginRepository,
         EntityRepository $countryStateRepository,
         EntityRepository $customerAddressRepository,
-        LocaleFetcherInterface $localeFetcher,
         CountryCodeFetcherInterface $countryCodeFetcher,
-        SubdivisionCodeFetcherInterface $subdivisionCodeFetcher,
-        CountryHasStatesCheckerInterface $countryHasStatesChecker,
+        AddressCheckPayloadBuilderInterface $addressCheckPayloadBuilder,
         RequestStack $requestStack,
         LoggerInterface $logger
     ) {
@@ -73,10 +65,8 @@ class EnderecoService
         $this->pluginRepository = $pluginRepository;
         $this->countryStateRepository = $countryStateRepository;
         $this->customerAddressRepository = $customerAddressRepository;
-        $this->localeFetcher = $localeFetcher;
         $this->countryCodeFetcher = $countryCodeFetcher;
-        $this->subdivisionCodeFetcher = $subdivisionCodeFetcher;
-        $this->countryHasStatesChecker = $countryHasStatesChecker;
+        $this->addressCheckPayloadBuilder = $addressCheckPayloadBuilder;
         $this->requestStack = $requestStack;
 
         if (!is_null($requestStack->getMainRequest())) {
@@ -365,53 +355,18 @@ class EnderecoService
             $sessionId
         );
 
-        // Prepare the payload
-        $payloadData = [];
-
-        // Set locale
-        try {
-            $lang = $this->localeFetcher->fetchLocaleBySalesChannelId($salesChannelId, $context);
-        } catch (\Exception $e) {
-            $lang = 'de'; // set "de" by default.
-        }
-        $payloadData['language'] = $lang;
-
-        // Set country
-        $countryId = $addressEntity->getCountryId();
-        $countryCode = $this->countryCodeFetcher->fetchCountryCodeByCountryIdAndContext($countryId, $context);
-        $payloadData['country'] = $countryCode;
-
-        // Set postal code
-        $payloadData['postCode'] = empty($addressEntity->getZipcode()) ? '' : $addressEntity->getZipcode();
-
-        // Set locality
-        $payloadData['cityName'] = $addressEntity->getCity();
-
-        // Set street.
-        $payloadData['streetFull'] = $addressEntity->getStreet();
-
-        // Set optional subdivisionCode
-        if (!is_null($addressEntity->getCountryStateId())) {
-            $subdivisionCode = $this->subdivisionCodeFetcher->fetchSubdivisionCodeByCountryStateId(
-                $addressEntity->getCountryStateId(),
-                $context
-            );
-
-            if (!empty($subdivisionCode)) {
-                $payloadData['subdivisionCode'] = $subdivisionCode;
-            }
-        } elseif ($this->countryHasStatesChecker->hasCountryStates($countryId, $context)) {
-            // If a state was not assigned, but it would have been possible, check it.
-            // Maybe subdivision code must be enriched.
-            $payloadData['subdivisionCode'] = '';
-        }
+        $payload = $this->addressCheckPayloadBuilder->buildAddressCheckPayload(
+            $salesChannelId,
+            $addressEntity,
+            $context
+        );
 
         // Send the headers and payload to endereco api for valdiation.
         try {
             $payload = json_encode(
                 $this->preparePayload(
                     'addressCheck',
-                    $payloadData
+                    $payload->data()
                 )
             );
 

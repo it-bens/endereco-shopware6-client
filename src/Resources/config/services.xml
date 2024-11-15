@@ -33,10 +33,8 @@
             <argument type="service" id="plugin.repository"/>
             <argument type="service" id="country_state.repository"/>
             <argument type="service" id="customer_address.repository"/>
-            <argument type="service" id="Endereco\Shopware6Client\Service\AddressCheck\LocaleFetcherInterface"/>
             <argument type="service" id="Endereco\Shopware6Client\Service\AddressCheck\CountryCodeFetcherInterface"/>
-            <argument type="service" id="Endereco\Shopware6Client\Service\AddressCheck\SubdivisionCodeFetcherInterface"/>
-            <argument type="service" id="Endereco\Shopware6Client\Service\AddressCheck\CountryHasStatesCheckerInterface"/>
+            <argument type="service" id="Endereco\Shopware6Client\Service\AddressCheck\AddressCheckPayloadBuilderInterface"/>
             <argument type="service" id="request_stack"/>
             <argument type="service" id="Endereco\Shopware6Client\Run\Logger" />
         </service>
@@ -50,6 +48,14 @@
             <argument type="service" id="plugin.repository"/>
             <tag name="kernel.event_subscriber" />
         </service>
+
+        <service id="Endereco\Shopware6Client\Service\AddressCheck\AddressCheckPayloadBuilder" public="false">
+            <argument type="service" id="Endereco\Shopware6Client\Service\AddressCheck\LocaleFetcherInterface"/>
+            <argument type="service" id="Endereco\Shopware6Client\Service\AddressCheck\CountryCodeFetcherInterface"/>
+            <argument type="service" id="Endereco\Shopware6Client\Service\AddressCheck\SubdivisionCodeFetcherInterface"/>
+            <argument type="service" id="Endereco\Shopware6Client\Service\AddressCheck\CountryHasStatesCheckerInterface"/>
+        </service>
+        <service alias="Endereco\Shopware6Client\Service\AddressCheck\AddressCheckPayloadBuilder" id="Endereco\Shopware6Client\Service\AddressCheck\AddressCheckPayloadBuilderInterface" />
 
         <service id="Endereco\Shopware6Client\Service\AddressCheck\CountryCodeFetcher" public="false">
             <argument type="service" id="country.repository"/>
