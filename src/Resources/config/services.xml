@@ -27,6 +27,11 @@
             </call>
         </service>
 
+        <service id="Endereco\Shopware6Client\Console\UpdateOrdersCustomFieldsCommand" public="true">
+            <tag name="console.command"/>
+            <argument type="service" id="Endereco\Shopware6Client\Service\OrdersCustomFieldsUpdaterInterface" />
+        </service>
+
         <service id="Endereco\Shopware6Client\Controller\Storefront\AddressController" public="true">
             <argument type="service" id="Endereco\Shopware6Client\Service\EnderecoService" />
             <argument type="service" id="customer_address.repository" />
