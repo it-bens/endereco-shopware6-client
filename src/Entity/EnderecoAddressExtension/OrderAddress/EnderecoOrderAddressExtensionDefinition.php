@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace Endereco\Shopware6Client\Entity\EnderecoAddressExtension\OrderAddress;
 
 use Endereco\Shopware6Client\Entity\EnderecoAddressExtension\EnderecoBaseAddressExtensionDefinition;
+use Shopware\Core\Checkout\Customer\Aggregate\CustomerAddress\CustomerAddressDefinition;
 use Shopware\Core\Checkout\Order\Aggregate\OrderAddress\OrderAddressDefinition;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\FkField;
+use Shopware\Core\Framework\DataAbstractionLayer\Field\ManyToOneAssociationField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\OneToOneAssociationField;
+use Shopware\Core\Framework\DataAbstractionLayer\FieldCollection;
 
 /**
  * Class EnderecoAddressExtensionDefinition
@@ -41,6 +44,30 @@ class EnderecoOrderAddressExtensionDefinition extends EnderecoBaseAddressExtensi
     public function getEntityClass(): string
     {
         return EnderecoOrderAddressExtensionEntity::class;
+    }
+
+    protected function defineFields(): FieldCollection
+    {
+        $fieldCollection = parent::defineFields();
+
+        $fieldCollection->add(
+            new FkField(
+                'original_customer_address_id',
+                'originalCustomerAddressId',
+                OrderAddressDefinition::class
+            )
+        );
+        $fieldCollection->add(
+            new ManyToOneAssociationField(
+                'originalCustomerAddress',
+                'original_customer_address_id',
+                CustomerAddressDefinition::class,
+                'id',
+                false
+            )
+        );
+
+        return $fieldCollection;
     }
 
     protected function addressAssociationForeignKeyField(): FkField

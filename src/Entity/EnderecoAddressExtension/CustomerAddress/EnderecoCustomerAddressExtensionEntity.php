@@ -59,6 +59,7 @@ class EnderecoCustomerAddressExtensionEntity extends EnderecoBaseAddressExtensio
         $entity->setIsAmazonPayAddress($this->isAmazonPayAddress());
         $entity->setStreet($this->getStreet());
         $entity->setHouseNumber($this->getHouseNumber());
+        $entity->setOriginalCustomerAddressId($this->getAddressId());
 
         return $entity;
     }

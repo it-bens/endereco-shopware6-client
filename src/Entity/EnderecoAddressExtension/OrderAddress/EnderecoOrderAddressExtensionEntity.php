@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Endereco\Shopware6Client\Entity\EnderecoAddressExtension\OrderAddress;
 
 use Endereco\Shopware6Client\Entity\EnderecoAddressExtension\EnderecoBaseAddressExtensionEntity;
+use Shopware\Core\Checkout\Customer\Aggregate\CustomerAddress\CustomerAddressEntity;
 use Shopware\Core\Checkout\Order\Aggregate\OrderAddress\OrderAddressEntity;
 use Shopware\Core\Framework\DataAbstractionLayer\Entity;
 
@@ -22,6 +23,12 @@ class EnderecoOrderAddressExtensionEntity extends EnderecoBaseAddressExtensionEn
 {
     /** @var ?OrderAddressEntity The associated order address entity. */
     protected ?OrderAddressEntity $address = null;
+
+    /** @var ?string The ID of the customer address which contained the original validation data. */
+    protected ?string $originalCustomerAddressId = null;
+
+    /** @var ?CustomerAddressEntity The customer address which contained the original validation data. */
+    protected ?CustomerAddressEntity $originalCustomerAddress = null;
 
     /**
      * Get the associated order address entity.
@@ -48,6 +55,48 @@ class EnderecoOrderAddressExtensionEntity extends EnderecoBaseAddressExtensionEn
     }
 
     /**
+     * Get original customer address ID.
+     *
+     * @return ?string The ID of the customer address which contained the original validation data.
+     */
+    public function getOriginalCustomerAddressId(): ?string
+    {
+        return $this->originalCustomerAddressId;
+    }
+
+    /**
+     * Set original customer address ID.
+     *
+     * @param ?string $originalCustomerAddressId The ID of the customer address
+     *                                           which contained the original validation data.
+     */
+    public function setOriginalCustomerAddressId(?string $originalCustomerAddressId): void
+    {
+        $this->originalCustomerAddressId = $originalCustomerAddressId;
+    }
+
+    /**
+     * Get the original customer order address entity.
+     *
+     * @return CustomerAddressEntity|null The customer address which contained the original validation data.
+     */
+    public function getOriginalCustomerAddress(): ?CustomerAddressEntity
+    {
+        return $this->originalCustomerAddress;
+    }
+
+    /**
+     * Set the original customer order address entity.
+     *
+     * @param CustomerAddressEntity|null $originalCustomerAddress The customer address
+     *                                                            which contained the original validation data.
+     */
+    public function setOriginalCustomerAddress(?CustomerAddressEntity $originalCustomerAddress): void
+    {
+        $this->originalCustomerAddress = $originalCustomerAddress;
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function buildCartToOrderConversionData(): array
@@ -60,6 +109,7 @@ class EnderecoOrderAddressExtensionEntity extends EnderecoBaseAddressExtensionEn
         unset($data['createdAt']);
         unset($data['updatedAt']);
         unset($data['address']);
+        unset($data['originalCustomerAddress']);
 
         return $data;
     }
