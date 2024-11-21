@@ -29,6 +29,8 @@
 
         <service id="Endereco\Shopware6Client\Console\UpdateOrdersCustomFieldsCommand" public="true">
             <tag name="console.command"/>
+            <argument type="service" id="order.repository" />
+            <argument type="service" id="Endereco\Shopware6Client\Service\BySystemConfigFilterInterface" />
             <argument type="service" id="Endereco\Shopware6Client\Service\OrdersCustomFieldsUpdaterInterface" />
         </service>
 
@@ -78,6 +80,11 @@
             <argument type="service" id="Endereco\Shopware6Client\Service\AddressCheck\CountryHasStatesCheckerInterface"/>
         </service>
         <service alias="Endereco\Shopware6Client\Service\AddressCheck\AddressCheckPayloadBuilder" id="Endereco\Shopware6Client\Service\AddressCheck\AddressCheckPayloadBuilderInterface" />
+
+        <service id="Endereco\Shopware6Client\Service\BySystemConfigFilter" public="false">
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />
+        </service>
+        <service alias="Endereco\Shopware6Client\Service\BySystemConfigFilter" id="Endereco\Shopware6Client\Service\BySystemConfigFilterInterface" />
 
         <service id="Endereco\Shopware6Client\Service\AddressCheck\CountryCodeFetcher" public="false">
             <argument type="service" id="country.repository"/>
@@ -144,6 +151,8 @@
 
         <service id="Endereco\Shopware6Client\Subscriber\OrderAddressExtensionWrittenSubscriber">
             <tag name="kernel.event_subscriber"/>
+            <argument type="service" id="order_address.repository" />
+            <argument type="service" id="Endereco\Shopware6Client\Service\BySystemConfigFilterInterface" />
             <argument type="service" id="Endereco\Shopware6Client\Service\OrdersCustomFieldsUpdaterInterface" />
         </service>
     </services>

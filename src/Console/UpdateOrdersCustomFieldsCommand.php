@@ -2,9 +2,12 @@
 
 namespace Endereco\Shopware6Client\Console;
 
+use Endereco\Shopware6Client\Model\ExpectedSystemConfigValue;
+use Endereco\Shopware6Client\Service\BySystemConfigFilterInterface;
 use Endereco\Shopware6Client\Service\OrdersCustomFieldsUpdaterInterface;
 use Shopware\Core\Framework\Adapter\Console\ShopwareStyle;
 use Shopware\Core\Framework\Context;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -22,13 +25,20 @@ class UpdateOrdersCustomFieldsCommand extends Command
     protected static string $defaultDescription = self::COMMAND_DESCRIPTION;
 
     private Context $context;
+    private EntityRepository $orderRepository;
+    private BySystemConfigFilterInterface $bySystemConfigFilter;
     private OrdersCustomFieldsUpdaterInterface $ordersCustomFieldsUpdater;
 
     public function __construct(
+        EntityRepository $orderRepository,
+        BySystemConfigFilterInterface $bySystemConfigFilter,
         OrdersCustomFieldsUpdaterInterface $ordersCustomFieldsUpdater
     ) {
         // The method is internal since Shopware 6.6.1.0. After that, the `createCliContext` method can be used.
         $this->context = Context::createDefaultContext();
+
+        $this->orderRepository = $orderRepository;
+        $this->bySystemConfigFilter = $bySystemConfigFilter;
         $this->ordersCustomFieldsUpdater = $ordersCustomFieldsUpdater;
 
         parent::__construct();
@@ -61,6 +71,17 @@ class UpdateOrdersCustomFieldsCommand extends Command
         if (count($orderIds) > 0) {
             $io->info('The orders with IDs: ' . implode(', ', $orderIds) . ' will be updated.');
         }
+
+        $orderIds = $this->bySystemConfigFilter->filterEntityIdsBySystemConfig(
+            $this->orderRepository,
+            'salesChannelId',
+            $orderIds,
+            [
+                new ExpectedSystemConfigValue('enderecoActiveInThisChannel', true),
+                new ExpectedSystemConfigValue('enderecoWriteOrderCustomFields', true)
+            ],
+            $this->context
+        );
 
         $this->ordersCustomFieldsUpdater->updateOrdersCustomFields($orderIds, [], $this->context);
 
