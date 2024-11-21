@@ -74,9 +74,7 @@ class PluginLifecycle
         }
 
         // The custom fields to be dropped from the `Order` entity during uninstallation
-        $dropOrderCustomFields = [
-            OrderCustomFields::ADDRESS_VALIDATION_DATA
-        ];
+        $dropOrderCustomFields = OrderCustomFields::FIELDS;
 
         // Drop each of the specified custom fields in the order table
         foreach ($dropOrderCustomFields as $dropOrderCustomField) {

@@ -9,5 +9,10 @@ interface OrderCustomFieldsBuilderInterface
     /**
      * @return array<string, array<string, mixed>>
      */
-    public function buildOrderAddressValidationData(OrderEntity $orderEntity): array;
+    public function buildOrderBillingAddressValidationData(OrderEntity $orderEntity): array;
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    public function buildOrderShippingAddressValidationData(OrderEntity $orderEntity): array;
 }

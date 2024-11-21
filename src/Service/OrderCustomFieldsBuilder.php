@@ -10,13 +10,20 @@ use Shopware\Core\Checkout\Order\OrderEntity;
 
 final class OrderCustomFieldsBuilder implements OrderCustomFieldsBuilderInterface
 {
-    public function buildOrderAddressValidationData(OrderEntity $orderEntity): array
+    public function buildOrderBillingAddressValidationData(OrderEntity $orderEntity): array
     {
         $orderAddressExtensionCollection = new EnderecoOrderAddressExtensionCollection();
 
         foreach ($orderEntity->getAddresses() ?? [] as $orderAddressEntity) {
             $this->addOrderAddressExtensionToCollection($orderAddressEntity, $orderAddressExtensionCollection);
         }
+
+        return $orderAddressExtensionCollection->buildDataForOrderCustomField();
+    }
+
+    public function buildOrderShippingAddressValidationData(OrderEntity $orderEntity): array
+    {
+        $orderAddressExtensionCollection = new EnderecoOrderAddressExtensionCollection();
 
         foreach ($orderEntity->getDeliveries() ?? [] as $deliveryEntity) {
             $shippingOrderAddress = $deliveryEntity->getShippingOrderAddress();

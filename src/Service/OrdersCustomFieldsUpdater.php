@@ -54,8 +54,10 @@ final class OrdersCustomFieldsUpdater implements OrdersCustomFieldsUpdaterInterf
 
         $orderSyncPayload = [];
         foreach ($orderCollection as $orderEntity) {
-            $orderAddressValidationData = $this->orderCustomFieldBuilder->buildOrderAddressValidationData($orderEntity);
-            $orderCustomFields = new OrderCustomFields($orderAddressValidationData);
+            $orderCustomFields = new OrderCustomFields(
+                $this->orderCustomFieldBuilder->buildOrderBillingAddressValidationData($orderEntity),
+                $this->orderCustomFieldBuilder->buildOrderShippingAddressValidationData($orderEntity)
+            );
 
             $orderSyncPayload[] = [
                 'id' => $orderEntity->getId(),
