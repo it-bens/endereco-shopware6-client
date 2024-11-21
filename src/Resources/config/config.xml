@@ -451,6 +451,15 @@
             <helpText lang="de-DE">Die PayPal Express Prüfung aktiviert die Validierung von Adressen für Kunden, die über PayPal Express eine Bestellung tätigen. Beim Rücksprung aus PayPal zum Shop wird bei einem Adressfehler ein Korrekturvorschlag angezeigt.</helpText>
             <defaultValue>false</defaultValue>
         </input-field>
+
+        <input-field type="bool">
+            <name>enderecoWriteOrderCustomFields</name>
+            <label>Write order billing and shipping address validation data to order `custom_fields`</label>
+            <label lang="de-DE">Validierungsdaten der Rechnungs- und Lieferadressen einer Bestellung in `custom_fields` schreiben</label>
+            <helpText>The billing and shipping address validation data are present in the address extensions. They can be written redundantly into `custom_fields` of the `Order` entity to simplify the access and processing. A CLI command to update the fields of specific orders or all orders is available.</helpText>
+            <helpText lang="de-DE">Die Validierungsdaten der Rechnungs- und Lieferadressen befinden sich in den Adresserweiterung. Sie können redundant in die `custom_fields` der `Order` Entität geschrieben werden um den Zugriff und die Verarbeitung zu vereinfachen. Ein Kommandozeilenbefehl für die Aktualisierung der Felder von bestimmten Bestellungen oder allen Bestellungen steht zur Verfügung.</helpText>
+            <defaultValue>true</defaultValue>
+        </input-field>
     </card>
 
     <card>
