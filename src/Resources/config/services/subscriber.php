@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Endereco\Shopware6Client\Service\AddressCheck\CountryCodeFetcherInterface;
 use Endereco\Shopware6Client\Service\AddressesExtensionAmsRequestPayloadUpdaterInterface;
 use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddressIntegrityInsuranceInterface;
+use Endereco\Shopware6Client\Service\AddressIntegrity\OrderAddressIntegrityInsuranceInterface;
 use Endereco\Shopware6Client\Service\BySystemConfigFilterInterface;
 use Endereco\Shopware6Client\Service\EnderecoService;
 use Endereco\Shopware6Client\Service\OrderAddressToCustomerAddressDataMatcherInterface;
@@ -13,6 +14,7 @@ use Endereco\Shopware6Client\Subscriber\AddressExtensionWrittenSubscriber;
 use Endereco\Shopware6Client\Subscriber\ConvertCartToOrderSubscriber;
 use Endereco\Shopware6Client\Subscriber\CustomerAddressSubscriber;
 use Endereco\Shopware6Client\Subscriber\OrderSubscriber;
+use Endereco\Shopware6Client\Subscriber\OrderAddressSubscriber;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 

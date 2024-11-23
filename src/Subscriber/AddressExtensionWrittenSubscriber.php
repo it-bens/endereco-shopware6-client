@@ -24,8 +24,8 @@ class AddressExtensionWrittenSubscriber implements EventSubscriberInterface
         return [
             //EnderecoCustomerAddressExtensionDefinition::ENTITY_NAME . '.written'
             //    => 'updateCustomerAddressAmsRequestPayload',
-            EnderecoOrderAddressExtensionDefinition::ENTITY_NAME . '.written'
-                => 'updateOrderAddressAmsRequestPayload',
+            //EnderecoOrderAddressExtensionDefinition::ENTITY_NAME . '.written'
+            //    => 'updateOrderAddressAmsRequestPayload',
         ];
     }
 
