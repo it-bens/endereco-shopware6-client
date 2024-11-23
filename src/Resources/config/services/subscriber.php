@@ -12,7 +12,7 @@ use Endereco\Shopware6Client\Service\OrdersCustomFieldsUpdaterInterface;
 use Endereco\Shopware6Client\Subscriber\AddressExtensionWrittenSubscriber;
 use Endereco\Shopware6Client\Subscriber\ConvertCartToOrderSubscriber;
 use Endereco\Shopware6Client\Subscriber\CustomerAddressSubscriber;
-use Endereco\Shopware6Client\Subscriber\OrderAddressExtensionWrittenSubscriber;
+use Endereco\Shopware6Client\Subscriber\OrderSubscriber;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
@@ -53,10 +53,18 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ])
         ->tag('kernel.event_subscriber');
 
-    $services->set(OrderAddressExtensionWrittenSubscriber::class)
+    $services->set(OrderAddressSubscriber::class)
         ->args([
-            '$orderAddressRepository' => service('order_address.repository'),
+            '$enderecoService' => service(EnderecoService::class),
+            '$orderAddressIntegrityInsurance' => service(OrderAddressIntegrityInsuranceInterface::class),
+        ])
+        ->tag('kernel.event_subscriber');
+
+    $services->set(OrderSubscriber::class)
+        ->args([
+            '$orderRepository' => service('order.repository'),
             '$bySystemConfigFilter' => service(BySystemConfigFilterInterface::class),
+            '$orderAddressRepository' => service('order_address.repository'),
             '$ordersCustomFieldsUpdater' => service(OrdersCustomFieldsUpdaterInterface::class),
         ])
         ->tag('kernel.event_subscriber');

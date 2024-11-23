@@ -18,7 +18,6 @@ use Endereco\Shopware6Client\Service\OrderCustomFieldsBuilder;
 use Endereco\Shopware6Client\Service\OrderCustomFieldsBuilderInterface;
 use Endereco\Shopware6Client\Service\OrdersCustomFieldsUpdater;
 use Endereco\Shopware6Client\Service\OrdersCustomFieldsUpdaterInterface;
-use Shopware\Core\Framework\Api\Sync\SyncService;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
@@ -85,9 +84,8 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     $services->set(OrdersCustomFieldsUpdater::class)
         ->args([
-            '$orderRepository' => service('order.repository'),
             '$orderCustomFieldBuilder' => service(OrderCustomFieldsBuilderInterface::class),
-            '$syncService' => service(SyncService::class)
+            '$orderRepository' => service('order.repository')
         ]);
     $services->alias(OrdersCustomFieldsUpdaterInterface::class, OrdersCustomFieldsUpdater::class);
 };

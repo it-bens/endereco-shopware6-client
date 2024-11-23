@@ -29,6 +29,26 @@ final class OrderCustomFields
     }
 
     /**
+     * @param array<string|int, mixed> $data
+     */
+    public function compare(array $data): bool
+    {
+        $billingAddressValidationData = $data[self::BILLING_ADDRESS_VALIDATION_DATA] ?? [];
+        $thisBillingAddressValidationData = $this->billingAddressValidationData ?? [];
+        if (count($this->doCompare($billingAddressValidationData, $thisBillingAddressValidationData)) > 0) {
+            return false;
+        }
+
+        $shippingAddressValidationData = $data[self::SHIPPING_ADDRESS_VALIDATION_DATA] ?? [];
+        $thisShippingAddressValidationData = $this->shippingAddressValidationData ?? [];
+        if (count($this->doCompare($shippingAddressValidationData, $thisShippingAddressValidationData)) > 0) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * @return array<string, array<string, array<string, mixed>>>
      */
     public function data(): array
@@ -37,5 +57,50 @@ final class OrderCustomFields
             self::BILLING_ADDRESS_VALIDATION_DATA => $this->billingAddressValidationData,
             self::SHIPPING_ADDRESS_VALIDATION_DATA => $this->shippingAddressValidationData,
         ];
+    }
+
+    /**
+     * @param array<int|string, mixed> $data1
+     * @param mixed $data2
+     * @return array<int|string, mixed>
+     */
+    private function doCompare(array $data1, mixed $data2): array
+    {
+        if (!is_array($data2)) {
+            return $data1;
+        }
+
+        $result = array();
+
+        foreach ($data1 as $key => $value) {
+            if (!array_key_exists($key, $data2)) {
+                $result[$key] = $value;
+                continue;
+            }
+
+            if (is_array($value) && count($value) > 0) {
+                $recursiveArrayDiff = $this->doCompare($value, $data2[$key]);
+
+                if (count($recursiveArrayDiff) > 0) {
+                    $result[$key] = $recursiveArrayDiff;
+                }
+
+                continue;
+            }
+
+            $value1 = $value;
+            $value2 = $data2[$key];
+
+            if (is_float($value1) && is_float($value2)) {
+                $value1 = (string) $value1;
+                $value2 = (string) $value2;
+            }
+
+            if ($value1 !== $value2) {
+                $result[$key] = $value;
+            }
+        }
+
+        return $result;
     }
 }
