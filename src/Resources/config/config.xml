@@ -426,19 +426,19 @@
 
         <input-field type="bool">
             <name>enderecoCheckExistingAddress</name>
-            <label>Check addresses of existing customers once</label>
-            <label lang="de-DE">Adressen der Bestandskunden einmalig prüfen</label>
+            <label>Check addresses of existing customers and orders once</label>
+            <label lang="de-DE">Adressen der Bestandskunden und Bestandsbestellungen einmalig prüfen</label>
             <helpText>
-                Invoice and delivery addresses of customers who had already registered before using the Endereco plugin
-                can be validated once with the existing customer check. These customers are shown a correction
-                suggestion if they want to place an order through their customer account and there is an error in the
-                address.
+                Invoice and delivery addresses of customers and orderswho had already registered before using the
+                Endereco plugin can be validated once with the existing customer and order check. The customers are
+                shown a correction suggestion if they want to place an order through their customer account and
+                there is an error in the address.
             </helpText>
             <helpText lang="de-DE">
-                Rechnungs- und Lieferadressen von Kunden, die bereits vor Nutzung des Endereco Plugins registriert
-                waren, können mit der Bestandskundenprüfung einmalig validiert werden. Diese Kunden bekommen einen
-                Korrekturvorschlag angezeigt, wenn sie über ihr Kundenkonto eine Bestellung tätigen möchten und ein
-                Fehler in der Adresse vorliegt.
+                Rechnungs- und Lieferadressen von Kunden und Bestellungen, die bereits vor Nutzung des Endereco Plugins
+                registriert bzw. aufgegeben waren, können mit der Bestandskundenprüfung und Bestandsbestellungsprüfung
+                einmalig validiert werden. Die Kunden bekommen einen Korrekturvorschlag angezeigt, wenn sie über ihr
+                Kundenkonto eine Bestellung tätigen möchten und ein Fehler in der Adresse vorliegt.
             </helpText>
             <defaultValue>false</defaultValue>
         </input-field>
