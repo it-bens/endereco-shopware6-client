@@ -17,6 +17,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\Checkout\Customer\Aggregate\CustomerAddress\CustomerAddressEntity;
+use Shopware\Core\Checkout\Order\Aggregate\OrderAddress\OrderAddressEntity;
 use Shopware\Core\Framework\Api\Context\SalesChannelApiSource;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
@@ -684,7 +685,7 @@ class EnderecoService
     }
 
     /**
-     * Checks whether the 'existing customer address check' feature is enabled.
+     * Checks whether the 'existing address check' feature is enabled.
      *
      * This method accepts a sales channel ID and checks two conditions:
      * 1. Whether the Endereco plugin is active and ready to use for the given sales channel.
@@ -692,7 +693,7 @@ class EnderecoService
      *
      * The feature is considered active if both conditions are true. The method then returns this status.
      *
-     * This feature is used to decide whether or not existing customer addresses should be checked for updates.
+     * This feature is used to decide whether or not existing customer or order addresses should be checked for updates.
      * It can be controlled via the EnderecoShopware6Client configuration, providing flexibility to meet different
      * shop requirements.
      *
@@ -700,7 +701,7 @@ class EnderecoService
      *
      * @return bool Returns true if the feature is enabled, false otherwise.
      */
-    public function isExistingCustomerAddressCheckFeatureEnabled(string $salesChannelId): bool
+    public function isExistingAddressCheckFeatureEnabled(string $salesChannelId): bool
     {
         // Check if the Endereco plugin is active and ready to use for the given sales channel.
         $pluginIsReadyToUse = $this->isEnderecoPluginActive($salesChannelId);
@@ -781,11 +782,11 @@ class EnderecoService
     /**
      * Checks if a given address was created within the last 30 minutes.
      *
-     * @param CustomerAddressEntity $addressEntity The address entity to check.
+     * @param CustomerAddressEntity|OrderAddressEntity $addressEntity The address entity to check.
      *
      * @return bool Returns true if the address was created within the last 30 minutes, false otherwise.
      */
-    public function isAddressRecent(CustomerAddressEntity $addressEntity): bool
+    public function isAddressRecent(CustomerAddressEntity|OrderAddressEntity $addressEntity): bool
     {
         // Get the creation time of the address
         $creationTime = $addressEntity->getCreatedAt();

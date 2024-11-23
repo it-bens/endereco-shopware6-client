@@ -22,8 +22,8 @@ class AddressExtensionWrittenSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            EnderecoCustomerAddressExtensionDefinition::ENTITY_NAME . '.written'
-                => 'updateCustomerAddressAmsRequestPayload',
+            //EnderecoCustomerAddressExtensionDefinition::ENTITY_NAME . '.written'
+            //    => 'updateCustomerAddressAmsRequestPayload',
             EnderecoOrderAddressExtensionDefinition::ENTITY_NAME . '.written'
                 => 'updateOrderAddressAmsRequestPayload',
         ];

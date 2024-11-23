@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use Endereco\Shopware6Client\Service\AddDataToPage;
+use Endereco\Shopware6Client\Service\AddressCache;
+use Endereco\Shopware6Client\Service\AddressCacheInterface;
 use Endereco\Shopware6Client\Service\AddressCheck\AddressCheckPayloadBuilderInterface;
 use Endereco\Shopware6Client\Service\AddressCheck\CountryCodeFetcherInterface;
 use Endereco\Shopware6Client\Service\AddressesExtensionAmsRequestPayloadUpdater;
@@ -39,13 +41,14 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ])
         ->tag('kernel.event_subscriber');
 
+    $services->set(AddressCache::class);
+    $services->alias(AddressCacheInterface::class, AddressCache::class);
+
     $services->set(AddressesExtensionAmsRequestPayloadUpdater::class)
         ->args([
-            '$customerAddressRepository' => service('customer_address.repository'),
-        '$orderAddressRepository' => service('order_address.repository'),
-        '$addressCheckPayloadBuilder' => service(AddressCheckPayloadBuilderInterface::class),
-        '$customerAddressExtensionRepository' => service('endereco_customer_address_ext.repository'),
-        '$orderAddressExtensionRepository' => service('endereco_order_address_ext.repository'),
+            '$addressCheckPayloadBuilder' => service(AddressCheckPayloadBuilderInterface::class),
+            '$customerAddressExtensionRepository' => service('endereco_customer_address_ext.repository'),
+            '$orderAddressExtensionRepository' => service('endereco_order_address_ext.repository'),
         ]);
     $services->alias(
         AddressesExtensionAmsRequestPayloadUpdaterInterface::class,

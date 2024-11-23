@@ -11,5 +11,6 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $containerConfigurator->import(__DIR__ . '/services/run.php');
     $containerConfigurator->import(__DIR__ . '/services/service.php');
     $containerConfigurator->import(__DIR__ . '/services/service_address_check.php');
+    $containerConfigurator->import(__DIR__ . '/services/service_address_integrity.php');
     $containerConfigurator->import(__DIR__ . '/services/subscriber.php');
 };

@@ -63,4 +63,18 @@ class EnderecoCustomerAddressExtensionEntity extends EnderecoBaseAddressExtensio
 
         return $entity;
     }
+
+    /**
+     * Syncs the data of this address extension entity with the data of another address extension entity.
+     */
+    public function sync(EnderecoCustomerAddressExtensionEntity $addressExtensionToSyncFrom): void
+    {
+        $this->setStreet($addressExtensionToSyncFrom->getStreet());
+        $this->setHouseNumber($addressExtensionToSyncFrom->getHouseNumber());
+        $this->setIsPayPalAddress($addressExtensionToSyncFrom->isPayPalAddress());
+        $this->setAmsRequestPayload($addressExtensionToSyncFrom->getAmsRequestPayload());
+        $this->setAmsStatus($addressExtensionToSyncFrom->getAmsStatus());
+        $this->setAmsPredictions($addressExtensionToSyncFrom->getAmsPredictions());
+        $this->setAmsTimestamp($addressExtensionToSyncFrom->getAmsTimestamp());
+    }
 }

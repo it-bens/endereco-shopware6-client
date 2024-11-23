@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Endereco\Shopware6Client\Service\AddressCheck\CountryCodeFetcherInterface;
 use Endereco\Shopware6Client\Service\AddressesExtensionAmsRequestPayloadUpdaterInterface;
+use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddressIntegrityInsuranceInterface;
 use Endereco\Shopware6Client\Service\BySystemConfigFilterInterface;
 use Endereco\Shopware6Client\Service\EnderecoService;
 use Endereco\Shopware6Client\Service\OrderAddressToCustomerAddressDataMatcherInterface;
@@ -47,6 +48,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             '$countryRepository' => service('country.repository'),
             '$countryStateRepository' => service('country_state.repository'),
             '$countryCodeFetcher' => service(CountryCodeFetcherInterface::class),
+            '$customerAddressIntegrityInsurance' => service(CustomerAddressIntegrityInsuranceInterface::class),
             '$requestStack' => service('request_stack'),
         ])
         ->tag('kernel.event_subscriber');
