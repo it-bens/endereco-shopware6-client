@@ -7,8 +7,6 @@ use Endereco\Shopware6Client\Service\AddressCache;
 use Endereco\Shopware6Client\Service\AddressCacheInterface;
 use Endereco\Shopware6Client\Service\AddressCheck\AddressCheckPayloadBuilderInterface;
 use Endereco\Shopware6Client\Service\AddressCheck\CountryCodeFetcherInterface;
-use Endereco\Shopware6Client\Service\AddressesExtensionAmsRequestPayloadUpdater;
-use Endereco\Shopware6Client\Service\AddressesExtensionAmsRequestPayloadUpdaterInterface;
 use Endereco\Shopware6Client\Service\BySystemConfigFilter;
 use Endereco\Shopware6Client\Service\BySystemConfigFilterInterface;
 use Endereco\Shopware6Client\Service\EnderecoService;
@@ -42,17 +40,6 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     $services->set(AddressCache::class);
     $services->alias(AddressCacheInterface::class, AddressCache::class);
-
-    $services->set(AddressesExtensionAmsRequestPayloadUpdater::class)
-        ->args([
-            '$addressCheckPayloadBuilder' => service(AddressCheckPayloadBuilderInterface::class),
-            '$customerAddressExtensionRepository' => service('endereco_customer_address_ext.repository'),
-            '$orderAddressExtensionRepository' => service('endereco_order_address_ext.repository'),
-        ]);
-    $services->alias(
-        AddressesExtensionAmsRequestPayloadUpdaterInterface::class,
-        AddressesExtensionAmsRequestPayloadUpdater::class
-    );
 
     $services->set(BySystemConfigFilter::class)
         ->args([
