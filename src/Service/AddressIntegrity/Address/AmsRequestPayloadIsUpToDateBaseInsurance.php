@@ -52,6 +52,8 @@ abstract class AmsRequestPayloadIsUpToDateBaseInsurance
             ],
             $context
         );
+
+        $addressExtension->setAmsRequestPayload($addressCheckPayload->data());
     }
 
     abstract protected function getAddressExtensionRepository(): EntityRepository;

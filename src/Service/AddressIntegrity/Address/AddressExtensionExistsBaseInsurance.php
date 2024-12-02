@@ -15,17 +15,30 @@ abstract class AddressExtensionExistsBaseInsurance
         Context $context
     ): void {
         // If it doesn't exist, create a new one with default values
+        $addressExtension = $this->createAddressExtensionWithDefaultValues($addressEntity);
+
         $this->getAddressExtensionRepository()->upsert(
             [
                 [
-                    'addressId' => $addressEntity->getId(),
-                    'amsStatus' => EnderecoBaseAddressExtensionEntity::AMS_STATUS_NOT_CHECKED,
-                    'amsPredictions' => []
+                    'addressId' => $addressExtension->getAddressId(),
+                    'amsStatus' => $addressExtension->getAmsStatus(),
+                    'amsPredictions' => $addressExtension->getAmsPredictions()
                 ]
             ],
             $context
         );
+
+        $this->addExtensionToAddressEntity($addressEntity, $addressExtension);
     }
 
+    abstract protected function createAddressExtensionWithDefaultValues(
+        CustomerAddressEntity|OrderAddressEntity $addressEntity
+    ): EnderecoBaseAddressExtensionEntity;
+
     abstract protected function getAddressExtensionRepository(): EntityRepository;
+
+    abstract protected function addExtensionToAddressEntity(
+        CustomerAddressEntity|OrderAddressEntity $addressEntity,
+        EnderecoBaseAddressExtensionEntity $addressExtension
+    ): void;
 }
