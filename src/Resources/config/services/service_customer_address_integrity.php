@@ -1,30 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
-use Endereco\Shopware6Client\Entity\EnderecoAddressExtension\CustomerAddress\EnderecoCustomerAddressExtensionDefinition;
-use Endereco\Shopware6Client\Service\AddressCheck\AdditionalAddressFieldCheckerInterface;
-use Endereco\Shopware6Client\Service\CustomerAddressCacheInterface;
-use Endereco\Shopware6Client\Service\AddressCheck\CountryCodeFetcherInterface;
-use Endereco\Shopware6Client\Service\AddressIntegrity\Check\IsAmsRequestPayloadIsUpToDateCheckerInterface;
-use Endereco\Shopware6Client\Service\AddressIntegrity\Check\IsStreetSplitRequiredCheckerInterface;
-use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddress\AddressExtensionExistsInsurance;
-use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddress\AmsRequestPayloadIsUpToDateInsurance;
-use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddress\AmsStatusIsSetInsurance;
-use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddress\FlagIsSetInsurance\AmazonFlagIsSetInsurance;
-use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddress\FlagIsSetInsurance\PayPalExpressFlagIsSetInsurance;
-use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddress\IntegrityInsurance;
-use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddress\StreetIsSplitInsurance;
-use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddressIntegrityInsurance;
-use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddressIntegrityInsuranceInterface;
-use Endereco\Shopware6Client\Service\AddressIntegrity\Sync\CustomerAddressSyncer;
-use Endereco\Shopware6Client\Service\AddressIntegrity\Sync\CustomerAddressSyncerInterface;
-use Endereco\Shopware6Client\Service\EnderecoService;
-use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
-
-use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
-use function Symfony\Component\DependencyInjection\Loader\Configurator\tagged_iterator;
-
 /**
  * Configures services related to address integrity checks for customer addresses.
  *
@@ -32,11 +7,32 @@ use function Symfony\Component\DependencyInjection\Loader\Configurator\tagged_it
  * These insurances handle tasks such as verifying the existence of an address extension in the
  * database, splitting street data properly, invalidating outdated address validation data,
  * and synchronizing address flags (e.g., for Amazon Pay or PayPal Express).
- *
- * @param ContainerConfigurator $containerConfigurator The container configurator used to define services
- *
- * @return void
  */
+
+declare(strict_types=1);
+
+use Endereco\Shopware6Client\Entity\EnderecoAddressExtension\CustomerAddress\EnderecoCustomerAddressExtensionDefinition;
+use Endereco\Shopware6Client\Service\AddressCheck\AdditionalAddressFieldCheckerInterface;
+use Endereco\Shopware6Client\Service\AddressCorrection\AddressCorrectionScopeBuilderInterface;
+use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddress\FlagIsSetInsurance\PayPalExpressFlagIsSetInsurance;
+use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddress\StreetIsSplitInsurance\AddressPersistenceStrategyProvider;
+use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddress\StreetIsSplitInsurance\AddressPersistenceStrategyProviderInterface;
+use Endereco\Shopware6Client\Service\AddressCheck\CountryCodeFetcherInterface;
+use Endereco\Shopware6Client\Service\AddressIntegrity\Check\IsAmsRequestPayloadIsUpToDateCheckerInterface;
+use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddress\AddressExtensionExistsInsurance;
+use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddress\AmsRequestPayloadIsUpToDateInsurance;
+use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddress\AmsStatusIsSetInsurance;
+use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddress\FlagIsSetInsurance\AmazonFlagIsSetInsurance;
+use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddress\IntegrityInsurance;
+use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddress\StreetIsSplitInsurance;
+use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddressIntegrityInsurance;
+use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddressIntegrityInsuranceInterface;
+use Endereco\Shopware6Client\Service\EnderecoService;
+use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+
+use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
+use function Symfony\Component\DependencyInjection\Loader\Configurator\tagged_iterator;
+
 return static function (ContainerConfigurator $containerConfigurator): void {
     /**
      * Configure default service definitions to automatically wire and configure them.
@@ -70,15 +66,24 @@ return static function (ContainerConfigurator $containerConfigurator): void {
      */
     $services->set(StreetIsSplitInsurance::class)
         ->args([
-            '$isStreetSplitRequiredChecker' => service(IsStreetSplitRequiredCheckerInterface::class),
             '$countryCodeFetcher' => service(CountryCodeFetcherInterface::class),
             '$enderecoService' => service(EnderecoService::class),
             '$addressExtensionRepository' => service(
                 EnderecoCustomerAddressExtensionDefinition::ENTITY_NAME . '.repository'
             ),
-            '$customerAddressRepository' => service('customer_address.repository'),
+            '$addressPersistenceStrategyProvider' => service(AddressPersistenceStrategyProviderInterface::class),
+        ]);
+
+    /**
+     * Provides an address persitence strategy that decides which how address data from a street split
+     * should be persisted and fetched.
+     */
+    $services->set(AddressPersistenceStrategyProvider::class)
+        ->args([
+            '$addressCorrectionScopeBuilder' => service(AddressCorrectionScopeBuilderInterface::class),
             '$additionalAddressFieldChecker' => service(AdditionalAddressFieldCheckerInterface::class),
         ]);
+    $services->alias(AddressPersistenceStrategyProviderInterface::class, AddressPersistenceStrategyProvider::class);
 
     /**
      * Invalidates address validation data if the current payload is outdated or no longer valid.
@@ -134,8 +139,6 @@ return static function (ContainerConfigurator $containerConfigurator): void {
      */
     $services->set(CustomerAddressIntegrityInsurance::class)
         ->args([
-            '$addressCache' => service(CustomerAddressCacheInterface::class),
-            '$addressSyncer' => service(CustomerAddressSyncerInterface::class),
             '$insurances' => tagged_iterator(
                 'endereco.shopware6_client.customer_address_integrity_insurance',
                 null,
@@ -152,19 +155,4 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         CustomerAddressIntegrityInsuranceInterface::class,
         CustomerAddressIntegrityInsurance::class
     );
-
-    /**
-     * A service that copies and synchronizes address data from cache to entities.
-     * This is useful to ensure to save up on API requests.
-     */
-    $services->set(CustomerAddressSyncer::class)
-        ->args([
-            '$addressCache' => service(CustomerAddressCacheInterface::class),
-        ]);
-
-    /**
-     * Define an alias so that wherever CustomerAddressSyncerInterface is required,
-     * we use the concrete CustomerAddressSyncer class.
-     */
-    $services->alias(CustomerAddressSyncerInterface::class, CustomerAddressSyncer::class);
 };
