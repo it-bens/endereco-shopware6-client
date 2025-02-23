@@ -9,7 +9,7 @@ use Shopware\Core\Checkout\Order\OrderDefinition;
 use Shopware\Core\Checkout\Order\OrderEntity;
 use Shopware\Core\Framework\Api\Sync\SyncBehavior;
 use Shopware\Core\Framework\Api\Sync\SyncOperation;
-use Shopware\Core\Framework\Api\Sync\SyncServiceInterface;
+use Shopware\Core\Framework\Api\Sync\SyncService;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
@@ -20,12 +20,12 @@ final class OrdersCustomFieldsUpdater implements OrdersCustomFieldsUpdaterInterf
 {
     private OrderCustomFieldsBuilderInterface $orderCustomFieldBuilder;
     private EntityRepository $orderRepository;
-    private SyncServiceInterface $syncService;
+    private SyncService $syncService;
 
     public function __construct(
         OrderCustomFieldsBuilderInterface $orderCustomFieldBuilder,
         EntityRepository $orderRepository,
-        SyncServiceInterface $syncService
+        SyncService $syncService
     ) {
         $this->orderCustomFieldBuilder = $orderCustomFieldBuilder;
         $this->orderRepository = $orderRepository;
