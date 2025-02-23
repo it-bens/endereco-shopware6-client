@@ -14,6 +14,7 @@ declare(strict_types=1);
 use Endereco\Shopware6Client\Entity\EnderecoAddressExtension\CustomerAddress\EnderecoCustomerAddressExtensionDefinition;
 use Endereco\Shopware6Client\Service\AddressCheck\AdditionalAddressFieldCheckerInterface;
 use Endereco\Shopware6Client\Service\AddressCorrection\AddressCorrectionScopeBuilderInterface;
+use Endereco\Shopware6Client\Service\AddressCorrection\StreetSplitterInterface;
 use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddress\FlagIsSetInsurance\PayPalExpressFlagIsSetInsurance;
 use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddress\StreetIsSplitInsurance\AddressPersistenceStrategyProvider;
 use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddress\StreetIsSplitInsurance\AddressPersistenceStrategyProviderInterface;
@@ -67,6 +68,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $services->set(StreetIsSplitInsurance::class)
         ->args([
             '$countryCodeFetcher' => service(CountryCodeFetcherInterface::class),
+            '$streetSplitter' => service(StreetSplitterInterface::class),
             '$enderecoService' => service(EnderecoService::class),
             '$addressExtensionRepository' => service(
                 EnderecoCustomerAddressExtensionDefinition::ENTITY_NAME . '.repository'

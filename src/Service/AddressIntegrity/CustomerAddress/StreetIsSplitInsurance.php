@@ -7,6 +7,7 @@ namespace Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddress;
 use Endereco\Shopware6Client\Entity\CustomerAddress\CustomerAddressExtension;
 use Endereco\Shopware6Client\Entity\EnderecoAddressExtension\CustomerAddress\EnderecoCustomerAddressExtensionEntity;
 use Endereco\Shopware6Client\Service\AddressCheck\CountryCodeFetcherInterface;
+use Endereco\Shopware6Client\Service\AddressCorrection\StreetSplitterInterface;
 use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddress\StreetIsSplitInsurance\AddressPersistenceStrategyProviderInterface;
 use Endereco\Shopware6Client\Service\EnderecoService;
 use Shopware\Core\Checkout\Customer\Aggregate\CustomerAddress\CustomerAddressEntity;
@@ -19,17 +20,20 @@ use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 final class StreetIsSplitInsurance implements IntegrityInsurance
 {
     private CountryCodeFetcherInterface $countryCodeFetcher;
+    private StreetSplitterInterface $streetSplitter;
     private EnderecoService $enderecoService;
     private EntityRepository $addressExtensionRepository;
     private AddressPersistenceStrategyProviderInterface $addressPersistenceStrategyProvider;
 
     public function __construct(
         CountryCodeFetcherInterface $countryCodeFetcher,
+        StreetSplitterInterface $streetSplitter,
         EnderecoService $enderecoService,
         EntityRepository $addressExtensionRepository,
         AddressPersistenceStrategyProviderInterface $addressPersistenceStrategyProvider
     ) {
         $this->countryCodeFetcher = $countryCodeFetcher;
+        $this->streetSplitter = $streetSplitter;
         $this->enderecoService = $enderecoService;
         $this->addressExtensionRepository = $addressExtensionRepository;
         $this->addressPersistenceStrategyProvider = $addressPersistenceStrategyProvider;
@@ -83,7 +87,7 @@ final class StreetIsSplitInsurance implements IntegrityInsurance
         );
 
         $additionalInfo = $addressPersistenceStrategy->getAdditionalInfoForStreetSplit($addressEntity);
-        list($normalizedFullStreet, $streetName, $buildingNumber, $normalizedAdditionalInfo) = $this->enderecoService->splitStreet(
+        list($normalizedFullStreet, $streetName, $buildingNumber, $normalizedAdditionalInfo) = $this->streetSplitter->splitStreet(
             $fullStreet,
             $additionalInfo,
             $countryCode,
