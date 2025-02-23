@@ -46,7 +46,6 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             '$customerAddressRepository' => service('customer_address.repository'),
             '$orderAddressRepository' => service('order_address.repository'),
             '$countryCodeFetcher' => service(CountryCodeFetcherInterface::class),
-            '$addressCheckPayloadBuilder' => service(AddressCheckPayloadBuilderInterface::class),
             '$agentInfoGenerator' => service(AgentInfoGeneratorInterface::class),
             '$requestHeadersGenerator' => service(RequestHeadersGeneratorInterface::class),
             '$payloadPreparator' => service(PayloadPreparatorInterface::class),

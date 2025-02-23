@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 use Endereco\Shopware6Client\Entity\EnderecoAddressExtension\CustomerAddress\EnderecoCustomerAddressExtensionDefinition;
 use Endereco\Shopware6Client\Service\AddressCheck\AdditionalAddressFieldCheckerInterface;
+use Endereco\Shopware6Client\Service\AddressCheck\AddressCheckerInterface;
 use Endereco\Shopware6Client\Service\AddressCorrection\AddressCorrectionScopeBuilderInterface;
 use Endereco\Shopware6Client\Service\AddressCorrection\StreetSplitterInterface;
 use Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddress\FlagIsSetInsurance\PayPalExpressFlagIsSetInsurance;
@@ -107,6 +108,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->args([
             '$isAmsRequestPayloadIsUpToDateChecker' =>
                 service(IsAmsRequestPayloadIsUpToDateCheckerInterface::class),
+            '$addressChecker' => service(AddressCheckerInterface::class),
             '$enderecoService' => service(EnderecoService::class),
         ]);
 

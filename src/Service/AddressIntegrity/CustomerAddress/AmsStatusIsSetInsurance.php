@@ -5,6 +5,7 @@ namespace Endereco\Shopware6Client\Service\AddressIntegrity\CustomerAddress;
 use Endereco\Shopware6Client\Entity\CustomerAddress\CustomerAddressExtension;
 use Endereco\Shopware6Client\Entity\EnderecoAddressExtension\CustomerAddress\EnderecoCustomerAddressExtensionEntity;
 use Endereco\Shopware6Client\Model\FailedAddressCheckResult;
+use Endereco\Shopware6Client\Service\AddressCheck\AddressCheckerInterface;
 use Endereco\Shopware6Client\Service\AddressIntegrity\Check\IsAmsRequestPayloadIsUpToDateCheckerInterface;
 use Endereco\Shopware6Client\Service\EnderecoService;
 use Shopware\Core\Checkout\Customer\Aggregate\CustomerAddress\CustomerAddressEntity;
@@ -21,20 +22,26 @@ final class AmsStatusIsSetInsurance implements IntegrityInsurance
     private const MAX_VALIDATION_ATTEMPTS = 3;
 
     private EnderecoService $enderecoService;
+
+    private AddressCheckerInterface $addressChecker;
+
     private IsAmsRequestPayloadIsUpToDateCheckerInterface $isAmsRequestPayloadIsUpToDateChecker;
 
     /**
      * AmsStatusIsSetInsurance constructor.
      *
      * @param IsAmsRequestPayloadIsUpToDateCheckerInterface $isAmsRequestPayloadIsUpToDateChecker Checker service
+     * @param AddressCheckerInterface $addressChecker Service (with cache) for interacting
+     * with the Endereco API for the address check
      * @param EnderecoService $enderecoService Service for interacting with the Endereco API
      */
     public function __construct(
         IsAmsRequestPayloadIsUpToDateCheckerInterface $isAmsRequestPayloadIsUpToDateChecker,
+        AddressCheckerInterface $addressChecker,
         EnderecoService $enderecoService
-
     ) {
         $this->enderecoService = $enderecoService;
+        $this->addressChecker = $addressChecker;
         $this->isAmsRequestPayloadIsUpToDateChecker = $isAmsRequestPayloadIsUpToDateChecker;
     }
 
@@ -91,7 +98,7 @@ final class AmsStatusIsSetInsurance implements IntegrityInsurance
             }
 
             // Then we validate the address.
-            $addressCheckResult = $this->enderecoService->checkAddress(
+            $addressCheckResult = $this->addressChecker->checkAddress(
                 $addressEntity,
                 $context,
                 $salesChannelId,
@@ -137,7 +144,8 @@ final class AmsStatusIsSetInsurance implements IntegrityInsurance
      *
      * @return bool True if validation is applicable, false otherwise
      */
-    protected function canValidate(CustomerAddressEntity $addressEntity, string $salesChannelId): bool {
+    protected function canValidate(CustomerAddressEntity $addressEntity, string $salesChannelId): bool
+    {
 
         // TODO: extract into configuration as iterable list of filters.
         $existingCustomerCheckIsRelevant =
