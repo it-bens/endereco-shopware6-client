@@ -470,6 +470,8 @@
             <defaultValue>false</defaultValue>
         </input-field>
 
+        <!-- TODO: Temporarily hidden due to order address handling bug - re-enable after tests pass -->
+        <!--
         <input-field type="bool">
             <name>enderecoWriteOrderCustomFields</name>
             <label>Write order billing and shipping address validation data to order `custom_fields`</label>
@@ -478,6 +480,7 @@
             <helpText lang="de-DE">Die Validierungsdaten der Rechnungs- und Lieferadressen befinden sich in der Adresserweiterung. Sie können redundant in die `custom_fields` der `Order` Entität geschrieben werden um den Zugriff und die Verarbeitung zu vereinfachen.</helpText>
             <defaultValue>false</defaultValue>
         </input-field>
+        -->
 
         <input-field type="bool">
             <name>enderecoImportExportCheck</name>
