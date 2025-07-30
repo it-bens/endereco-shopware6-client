@@ -35,6 +35,21 @@ class EnderecoCustomerAddressExtensionEntity extends EnderecoBaseAddressExtensio
     protected ?CustomerAddressEntity $address = null;
 
     /**
+     * Creates a customer address extension instance with default values and proper unique identifier.
+     * 
+     * @param string $addressId The customer address ID to associate with
+     * @return EnderecoCustomerAddressExtensionEntity
+     */
+    public static function createWithDefaultValues(string $addressId): EnderecoCustomerAddressExtensionEntity
+    {
+        $addressExtension = new EnderecoCustomerAddressExtensionEntity();
+        $addressExtension->setAddressId($addressId);
+        $addressExtension->setUniqueIdentifier($addressId);
+
+        return $addressExtension;
+    }
+
+    /**
      * Gets the associated customer address entity.
      *
      * @return CustomerAddressEntity|null The associated customer address entity or null if not set
@@ -99,4 +114,5 @@ class EnderecoCustomerAddressExtensionEntity extends EnderecoBaseAddressExtensio
         $this->setAmsPredictions($addressExtensionToSyncFrom->getAmsPredictions());
         $this->setAmsTimestamp($addressExtensionToSyncFrom->getAmsTimestamp());
     }
+
 }
