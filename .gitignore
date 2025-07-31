@@ -9,3 +9,7 @@ EnderecoShopware6Client*.zip
 EnderecoShopware6ClientStore*.zip
 shops/*
 !shops/.gitkeep
+
+# Test artifacts
+tests/.phpunit.cache/
+tests/coverage/
