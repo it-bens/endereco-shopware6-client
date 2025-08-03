@@ -118,7 +118,7 @@ class EnderecoOrderAddressExtensionEntity extends EnderecoBaseAddressExtensionEn
      */
     public function setAddress(?Entity $address): void
     {
-        if (!$address instanceof OrderAddressEntity) {
+        if ($address !== null && !$address instanceof OrderAddressEntity) {
             throw new \InvalidArgumentException('The address must be an instance of OrderAddressEntity.');
         }
 

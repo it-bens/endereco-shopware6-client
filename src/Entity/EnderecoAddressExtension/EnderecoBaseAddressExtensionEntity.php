@@ -65,6 +65,7 @@ abstract class EnderecoBaseAddressExtensionEntity extends Entity
      * Get address ID.
      *
      * @return string The ID of the associated address.
+     * @codeCoverageIgnore
      */
     public function getAddressId(): string
     {
@@ -75,6 +76,7 @@ abstract class EnderecoBaseAddressExtensionEntity extends Entity
      * Set address ID.
      *
      * @param string $addressId The ID of the associated address.
+     * @codeCoverageIgnore
      */
     public function setAddressId(string $addressId): void
     {
@@ -85,6 +87,7 @@ abstract class EnderecoBaseAddressExtensionEntity extends Entity
      * Get the request payload that was sent to verify the address.
      *
      * @return string The request payload that was sent to verify the address
+     * @codeCoverageIgnore
      */
     public function getAmsRequestPayload(): string
     {
@@ -95,6 +98,7 @@ abstract class EnderecoBaseAddressExtensionEntity extends Entity
      * Set the request payload that was sent to verify the address.
      *
      * @param string $amsRequestPayload The request payload that was sent to verify the address.
+     * @codeCoverageIgnore
      */
     public function setAmsRequestPayload(string $amsRequestPayload): void
     {
@@ -105,6 +109,7 @@ abstract class EnderecoBaseAddressExtensionEntity extends Entity
      * Get the status of the AMS check.
      *
      * @return string The status of the AMS check.
+     * @codeCoverageIgnore
      */
     public function getAmsStatus(): string
     {
@@ -115,6 +120,7 @@ abstract class EnderecoBaseAddressExtensionEntity extends Entity
      * Set the status of the AMS check.
      *
      * @param string $amsStatus The status of the AMS check.
+     * @codeCoverageIgnore
      */
     public function setAmsStatus(string $amsStatus): void
     {
@@ -125,6 +131,7 @@ abstract class EnderecoBaseAddressExtensionEntity extends Entity
      * Get the timestamp of the last AMS check.
      *
      * @return int The timestamp of the last AMS check.
+     * @codeCoverageIgnore
      */
     public function getAmsTimestamp(): int
     {
@@ -135,6 +142,7 @@ abstract class EnderecoBaseAddressExtensionEntity extends Entity
      * Set the timestamp of the last AMS check.
      *
      * @param int $amsTimestamp The timestamp of the last AMS check.
+     * @codeCoverageIgnore
      */
     public function setAmsTimestamp(int $amsTimestamp): void
     {
@@ -145,6 +153,7 @@ abstract class EnderecoBaseAddressExtensionEntity extends Entity
      * Get the predictions of the AMS check.
      *
      * @return array<array<string, string>> The predictions of the AMS check.
+     * @codeCoverageIgnore
      */
     public function getAmsPredictions(): array
     {
@@ -155,6 +164,7 @@ abstract class EnderecoBaseAddressExtensionEntity extends Entity
      * Set the predictions of the AMS check.
      *
      * @param array<array<string, string>> $amsPredictions The predictions of the AMS check.
+     * @codeCoverageIgnore
      */
     public function setAmsPredictions(array $amsPredictions): void
     {
@@ -165,6 +175,7 @@ abstract class EnderecoBaseAddressExtensionEntity extends Entity
      * Check if the address is a PayPal address.
      *
      * @return bool True if the address is a PayPal address, false otherwise.
+     * @codeCoverageIgnore
      */
     public function isPayPalAddress(): bool
     {
@@ -175,6 +186,7 @@ abstract class EnderecoBaseAddressExtensionEntity extends Entity
      * Set the flag indicating whether the address is a PayPal address.
      *
      * @param bool $isPayPalAddress True if the address is a PayPal address, false otherwise.
+     * @codeCoverageIgnore
      */
     public function setIsPayPalAddress(bool $isPayPalAddress): void
     {
@@ -185,6 +197,7 @@ abstract class EnderecoBaseAddressExtensionEntity extends Entity
      * Check if the address is an Amazon Pay address.
      *
      * @return bool True if the address is an Amazon Pay address, false otherwise.
+     * @codeCoverageIgnore
      */
     public function isAmazonPayAddress(): bool
     {
@@ -195,6 +208,7 @@ abstract class EnderecoBaseAddressExtensionEntity extends Entity
      * Set the flag indicating whether the address is a Amazon Pay address.
      *
      * @param bool $isAmazonPayAddress True if the address is an Amazon Pay address, false otherwise.
+     * @codeCoverageIgnore
      */
     public function setIsAmazonPayAddress(bool $isAmazonPayAddress): void
     {
@@ -205,6 +219,7 @@ abstract class EnderecoBaseAddressExtensionEntity extends Entity
      * Get the street part of the address.
      *
      * @return string The street part of the address.
+     * @codeCoverageIgnore
      */
     public function getStreet(): string
     {
@@ -215,6 +230,7 @@ abstract class EnderecoBaseAddressExtensionEntity extends Entity
      * Set the street part of the address.
      *
      * @param string $street The street part of the address.
+     * @codeCoverageIgnore
      */
     public function setStreet(string $street): void
     {
@@ -235,6 +251,7 @@ abstract class EnderecoBaseAddressExtensionEntity extends Entity
      * Set the house number part of the address.
      *
      * @param string $houseNumber The house number part of the address.
+     * @codeCoverageIgnore
      */
     public function setHouseNumber(string $houseNumber): void
     {
