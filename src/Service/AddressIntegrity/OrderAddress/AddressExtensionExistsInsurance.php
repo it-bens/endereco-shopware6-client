@@ -67,7 +67,7 @@ final class AddressExtensionExistsInsurance implements IntegrityInsurance
         OrderAddressEntity $addressEntity,
         Context $context
     ): void {
-        $addressExtension = EnderecoOrderAddressExtensionEntity::createWithDefaultValues($addressEntity->getId(), $addressEntity->getVersionId());
+        $addressExtension = EnderecoOrderAddressExtensionEntity::createWithDefaultValuesFromAddress($addressEntity);
 
         $this->addressExtensionRepository->upsert(
             [[

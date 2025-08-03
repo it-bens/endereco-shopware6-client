@@ -60,7 +60,7 @@ final class AddressExtensionExistsInsurance implements IntegrityInsurance
         CustomerAddressEntity $addressEntity,
         Context $context
     ): void {
-        $addressExtension = $this->createAddressExtensionWithDefaultValues($addressEntity);
+        $addressExtension = EnderecoCustomerAddressExtensionEntity::createWithDefaultValuesFromAddress($addressEntity);
 
         $this->addressExtensionRepository->upsert(
             [[
@@ -72,20 +72,6 @@ final class AddressExtensionExistsInsurance implements IntegrityInsurance
         );
 
         $this->addExtensionToAddressEntity($addressEntity, $addressExtension);
-    }
-
-    /**
-     * Initializes extension with default values
-     *
-     * @param CustomerAddressEntity $addressEntity
-     * @return EnderecoCustomerAddressExtensionEntity
-     */
-    protected function createAddressExtensionWithDefaultValues(
-        CustomerAddressEntity $addressEntity
-    ): EnderecoCustomerAddressExtensionEntity {
-        $addressExtension = EnderecoCustomerAddressExtensionEntity::createWithDefaultValues($addressEntity->getId());
-        $addressExtension->setAddress($addressEntity);
-        return $addressExtension;
     }
 
     /**

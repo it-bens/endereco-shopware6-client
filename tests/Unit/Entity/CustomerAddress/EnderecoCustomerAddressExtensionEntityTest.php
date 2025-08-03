@@ -117,6 +117,38 @@ class EnderecoCustomerAddressExtensionEntityTest extends TestCase
     }
 
     /**
+     * Provides test data for unique identifier fallback logic.
+     *
+     * @return \Generator<string, array{string, ?string, string}>
+     */
+    public static function uniqueIdentifierFallbackProvider(): \Generator
+    {
+        yield 'explicit unique identifier set' => [
+            'address-123',
+            'unique-456',
+            'unique-456'
+        ];
+
+        yield 'no unique identifier set' => [
+            'address-789',
+            null,
+            'address-789'
+        ];
+
+        yield 'empty unique identifier string' => [
+            'address-abc',
+            '',
+            ''
+        ];
+
+        yield 'whitespace unique identifier' => [
+            'address-def',
+            '  ',
+            '  '
+        ];
+    }
+
+    /**
      * Tests that manually created extensions work in collections.
      *
      * This prevents the TypeError that caused production failures when
@@ -131,6 +163,28 @@ class EnderecoCustomerAddressExtensionEntityTest extends TestCase
 
         $this->assertCount(1, $collection);
         $this->assertSame($extension, $collection->first());
+    }
+
+    /**
+     * Tests that createOrderAddressExtension produces valid entities.
+     *
+     * Validates that order extensions created from customer extensions
+     * have proper unique identifiers and can be added to collections.
+     */
+    public function testCreateOrderAddressExtensionProducesValidEntity(): void
+    {
+        $customerExtension = EnderecoCustomerAddressExtensionEntity::createWithDefaultValues('customer-id');
+        $customerExtension->setAmsStatus('address_correct');
+        $customerExtension->setStreet('Test Street');
+        $customerExtension->setHouseNumber('123');
+
+        $orderExtension = $customerExtension->createOrderAddressExtension('order-id');
+
+        $this->assertNotEmpty($orderExtension->getUniqueIdentifier());
+
+        $collection = new EnderecoOrderAddressExtensionCollection();
+        $collection->add($orderExtension);
+        $this->assertSame(1, $collection->count());
     }
 
     /**
@@ -163,56 +217,32 @@ class EnderecoCustomerAddressExtensionEntityTest extends TestCase
     }
 
     /**
-     * Tests that createOrderAddressExtension produces valid entities.
+     * Tests that getUniqueIdentifier handles conditional fallback logic correctly.
      *
-     * Validates that order extensions created from customer extensions
-     * have proper unique identifiers and can be added to collections.
+     * Validates the critical fallback mechanism that ensures collection operations
+     * work properly by testing unique identifier priority: custom ID first, then address ID.
      */
-    public function testCreateOrderAddressExtensionProducesValidEntity(): void
-    {
-        $customerExtension = EnderecoCustomerAddressExtensionEntity::createWithDefaultValues('customer-id');
-        $customerExtension->setAmsStatus('address_correct');
-        $customerExtension->setStreet('Test Street');
-        $customerExtension->setHouseNumber('123');
+    #[DataProvider('uniqueIdentifierFallbackProvider')]
+    public function testGetUniqueIdentifierConditionalLogic(
+        string $addressId,
+        ?string $uniqueIdentifierToSet,
+        string $expectedReturn
+    ): void {
+        $extension = new EnderecoCustomerAddressExtensionEntity();
+        $extension->setAddressId($addressId);
 
-        $orderExtension = $customerExtension->createOrderAddressExtension('order-id');
+        if ($uniqueIdentifierToSet !== null) {
+            $extension->setUniqueIdentifier($uniqueIdentifierToSet);
+        }
 
-        // Verify unique identifier is set
-        $this->assertNotEmpty($orderExtension->getUniqueIdentifier());
-
-        // Verify it works in collections
-        $collection = new EnderecoOrderAddressExtensionCollection();
-        $collection->add($orderExtension);
-        $this->assertCount(1, $collection);
+        $this->assertSame($expectedReturn, $extension->getUniqueIdentifier());
     }
 
     /**
-     * Tests that sync operation preserves unique identifier.
+     * Tests that manually set unique identifiers work in collections correctly.
      *
-     * Ensures sync doesn't interfere with collection functionality
-     * by maintaining stable unique identifiers.
-     */
-    public function testSyncPreservesUniqueIdentifier(): void
-    {
-        $extension1 = EnderecoCustomerAddressExtensionEntity::createWithDefaultValues('address-1');
-        $extension1->setStreet('Original Street');
-
-        $extension2 = EnderecoCustomerAddressExtensionEntity::createWithDefaultValues('address-2');
-        $extension2->setStreet('New Street');
-
-        $originalId = $extension1->getUniqueIdentifier();
-
-        $extension1->sync($extension2);
-
-        $this->assertSame($originalId, $extension1->getUniqueIdentifier());
-        $this->assertSame('New Street', $extension1->getStreet());
-    }
-
-    /**
-     * Tests that manually set unique identifiers work correctly.
-     *
-     * Validates that extensions can have custom unique identifiers
-     * different from their address ID for special use cases.
+     * Validates the complete workflow of setting custom unique identifiers and using them
+     * in collections, ensuring separation between address ID and unique identifier.
      */
     public function testManuallySetUniqueIdentifierWorks(): void
     {
@@ -227,15 +257,13 @@ class EnderecoCustomerAddressExtensionEntityTest extends TestCase
         $this->assertSame($addressId, $extension->getAddressId());
         $this->assertNotEquals($extension->getUniqueIdentifier(), $extension->getAddressId());
 
-        // Verify collection uses unique identifier, not address ID
         $collection = new EnderecoCustomerAddressExtensionCollection();
         $collection->add($extension);
 
         $this->assertTrue($collection->has($customUniqueId));
-        // Demonstrate that collection doesn't use address ID when custom unique ID is set
         $collectionSize = $collection->count();
-        $this->assertEquals(1, $collectionSize);
-        $this->assertNotEquals($customUniqueId, $addressId); // Different IDs
+        $this->assertSame(1, $collectionSize);
+        $this->assertNotEquals($customUniqueId, $addressId);
     }
 
     /**
@@ -247,11 +275,11 @@ class EnderecoCustomerAddressExtensionEntityTest extends TestCase
     public function testSetAddressAcceptsValidCustomerAddressEntity(): void
     {
         $extension = EnderecoCustomerAddressExtensionEntity::createWithDefaultValues('test-id');
-        $customerAddress = $this->createStub(CustomerAddressEntity::class);
+        $customerAddressStub = $this->createStub(CustomerAddressEntity::class);
 
-        $extension->setAddress($customerAddress);
+        $extension->setAddress($customerAddressStub);
 
-        $this->assertSame($customerAddress, $extension->getAddress());
+        $this->assertSame($customerAddressStub, $extension->getAddress());
     }
 
     /**
@@ -263,13 +291,11 @@ class EnderecoCustomerAddressExtensionEntityTest extends TestCase
     public function testSetAddressAcceptsNull(): void
     {
         $extension = EnderecoCustomerAddressExtensionEntity::createWithDefaultValues('test-id');
-        $customerAddress = $this->createStub(CustomerAddressEntity::class);
+        $customerAddressStub = $this->createStub(CustomerAddressEntity::class);
 
-        // First set a valid address
-        $extension->setAddress($customerAddress);
-        $this->assertSame($customerAddress, $extension->getAddress());
+        $extension->setAddress($customerAddressStub);
+        $this->assertSame($customerAddressStub, $extension->getAddress());
 
-        // Then clear it with null
         $extension->setAddress(null);
         $this->assertNull($extension->getAddress());
     }
@@ -283,12 +309,12 @@ class EnderecoCustomerAddressExtensionEntityTest extends TestCase
     public function testSetAddressThrowsExceptionForInvalidEntityType(): void
     {
         $extension = EnderecoCustomerAddressExtensionEntity::createWithDefaultValues('test-id');
-        $wrongEntityType = $this->createStub(Entity::class);
+        $wrongEntityTypeStub = $this->createStub(Entity::class);
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('The address must be an instance of CustomerAddressEntity.');
 
-        $extension->setAddress($wrongEntityType);
+        $extension->setAddress($wrongEntityTypeStub);
     }
 
     /**
@@ -317,6 +343,28 @@ class EnderecoCustomerAddressExtensionEntityTest extends TestCase
     }
 
     /**
+     * Tests that business logic methods handle complex status strings correctly.
+     *
+     * Some AMS statuses might be complex strings with multiple parts,
+     * ensuring the string matching logic works reliably.
+     */
+    public function testBusinessLogicHandlesComplexStatusStrings(): void
+    {
+        $extension = EnderecoCustomerAddressExtensionEntity::createWithDefaultValues('test-id');
+
+        $extension->setAmsStatus('address_multiple_variants_with_extra_info');
+        $this->assertTrue($extension->needsCorrectionInFrontend());
+        $this->assertFalse($extension->hasMinorCorrection());
+
+        $extension->setAmsStatus('some_address_minor_correction_status');
+        $this->assertTrue($extension->hasMinorCorrection());
+
+        $extension->setAmsStatus('');
+        $this->assertTrue($extension->isAddressChecked());
+        $this->assertFalse($extension->needsCorrectionInFrontend());
+    }
+
+    /**
      * Tests that house number getter handles various string values correctly.
      *
      * The getHouseNumber method contains null coalescing logic that ensures
@@ -330,6 +378,93 @@ class EnderecoCustomerAddressExtensionEntityTest extends TestCase
         $extension->setHouseNumber($setValue);
 
         $this->assertSame($expectedValue, $extension->getHouseNumber());
+    }
+
+    /**
+     * Tests that sync operation preserves unique identifier.
+     *
+     * Ensures sync doesn't interfere with collection functionality
+     * by maintaining stable unique identifiers.
+     */
+    public function testSyncPreservesUniqueIdentifier(): void
+    {
+        $extension1 = EnderecoCustomerAddressExtensionEntity::createWithDefaultValues('address-1');
+        $extension1->setStreet('Original Street');
+
+        $extension2 = EnderecoCustomerAddressExtensionEntity::createWithDefaultValues('address-2');
+        $extension2->setStreet('New Street');
+
+        $originalId = $extension1->getUniqueIdentifier();
+
+        $extension1->sync($extension2);
+
+        $this->assertSame($originalId, $extension1->getUniqueIdentifier());
+        $this->assertSame('New Street', $extension1->getStreet());
+    }
+
+    /**
+     * Tests sync method with empty and null values.
+     *
+     * Ensures sync operation handles edge cases without corrupting
+     * the entity state or causing runtime errors.
+     */
+    public function testSyncWithEmptyValues(): void
+    {
+        $extension1 = EnderecoCustomerAddressExtensionEntity::createWithDefaultValues('address-1');
+        $extension1->setStreet('Original Street');
+        $extension1->setHouseNumber('123');
+        $extension1->setAmsStatus('address_correct');
+
+        $extension2 = EnderecoCustomerAddressExtensionEntity::createWithDefaultValues('address-2');
+        // Leave extension2 with default empty values
+
+        $extension1->sync($extension2);
+
+        $this->assertSame('', $extension1->getStreet());
+        $this->assertSame('', $extension1->getHouseNumber());
+        $this->assertSame(EnderecoBaseAddressExtensionEntity::AMS_STATUS_NOT_CHECKED, $extension1->getAmsStatus());
+        $this->assertSame(0, $extension1->getAmsTimestamp());
+        $this->assertSame([], $extension1->getAmsPredictions());
+        $this->assertSame('', $extension1->getAmsRequestPayload());
+        $this->assertFalse($extension1->isPayPalAddress());
+    }
+
+    /**
+     * Tests that sync operation copies Amazon Pay flag when present.
+     *
+     * Validates that the sync method properly transfers Amazon Pay payment flags
+     * from source to target extension during synchronization operations.
+     */
+    public function testSyncCopiesAmazonPayFlag(): void
+    {
+        $extension1 = EnderecoCustomerAddressExtensionEntity::createWithDefaultValues('address-1');
+        $extension1->setIsAmazonPayAddress(false);
+
+        $extension2 = EnderecoCustomerAddressExtensionEntity::createWithDefaultValues('address-2');
+        $extension2->setIsAmazonPayAddress(true);
+
+        $extension1->sync($extension2);
+
+        $this->assertTrue($extension1->isAmazonPayAddress());
+    }
+
+    /**
+     * Tests that sync operation copies PayPal flag when present.
+     *
+     * Validates that the sync method properly transfers PayPal payment flags
+     * from source to target extension during synchronization operations.
+     */
+    public function testSyncCopiesPayPalFlag(): void
+    {
+        $extension1 = EnderecoCustomerAddressExtensionEntity::createWithDefaultValues('address-1');
+        $extension1->setIsPayPalAddress(false);
+
+        $extension2 = EnderecoCustomerAddressExtensionEntity::createWithDefaultValues('address-2');
+        $extension2->setIsPayPalAddress(true);
+
+        $extension1->sync($extension2);
+
+        $this->assertTrue($extension1->isPayPalAddress());
     }
 
     /**
@@ -355,34 +490,6 @@ class EnderecoCustomerAddressExtensionEntityTest extends TestCase
     }
 
     /**
-     * Tests sync method with empty and null values.
-     *
-     * Ensures sync operation handles edge cases without corrupting
-     * the entity state or causing runtime errors.
-     */
-    public function testSyncWithEmptyValues(): void
-    {
-        $extension1 = EnderecoCustomerAddressExtensionEntity::createWithDefaultValues('address-1');
-        $extension1->setStreet('Original Street');
-        $extension1->setHouseNumber('123');
-        $extension1->setAmsStatus('address_correct');
-
-        $extension2 = EnderecoCustomerAddressExtensionEntity::createWithDefaultValues('address-2');
-        // Leave extension2 with default empty values
-
-        $extension1->sync($extension2);
-
-        // Verify all values were synced (empty values should overwrite existing ones)
-        $this->assertSame('', $extension1->getStreet());
-        $this->assertSame('', $extension1->getHouseNumber());
-        $this->assertSame(EnderecoBaseAddressExtensionEntity::AMS_STATUS_NOT_CHECKED, $extension1->getAmsStatus());
-        $this->assertSame(0, $extension1->getAmsTimestamp());
-        $this->assertSame([], $extension1->getAmsPredictions());
-        $this->assertSame('', $extension1->getAmsRequestPayload());
-        $this->assertFalse($extension1->isPayPalAddress());
-    }
-
-    /**
      * Tests createOrderAddressExtension preserves all data correctly.
      *
      * Validates that all address verification data is properly transferred
@@ -402,7 +509,6 @@ class EnderecoCustomerAddressExtensionEntityTest extends TestCase
 
         $orderExtension = $customerExtension->createOrderAddressExtension('order-id');
 
-        // Verify all data was transferred
         $this->assertSame('order-id', $orderExtension->getAddressId());
         $this->assertSame('address_minor_correction', $orderExtension->getAmsStatus());
         $this->assertSame(1234567890, $orderExtension->getAmsTimestamp());
@@ -413,33 +519,7 @@ class EnderecoCustomerAddressExtensionEntityTest extends TestCase
         $this->assertSame('Test Street', $orderExtension->getStreet());
         $this->assertSame('42A', $orderExtension->getHouseNumber());
 
-        // Verify order extension has proper ID and unique identifier
         $this->assertNotEmpty($orderExtension->getId());
         $this->assertSame($orderExtension->getId(), $orderExtension->getUniqueIdentifier());
-    }
-
-    /**
-     * Tests that business logic methods handle complex status strings correctly.
-     *
-     * Some AMS statuses might be complex strings with multiple parts,
-     * ensuring the string matching logic works reliably.
-     */
-    public function testBusinessLogicHandlesComplexStatusStrings(): void
-    {
-        $extension = EnderecoCustomerAddressExtensionEntity::createWithDefaultValues('test-id');
-
-        // Test status with multiple parts
-        $extension->setAmsStatus('address_multiple_variants_with_extra_info');
-        $this->assertTrue($extension->needsCorrectionInFrontend());
-        $this->assertFalse($extension->hasMinorCorrection());
-
-        // Test status that might contain the minor correction string as substring
-        $extension->setAmsStatus('some_address_minor_correction_status');
-        $this->assertTrue($extension->hasMinorCorrection());
-
-        // Test empty status (edge case)
-        $extension->setAmsStatus('');
-        $this->assertTrue($extension->isAddressChecked()); // Empty string != NOT_CHECKED constant
-        $this->assertFalse($extension->needsCorrectionInFrontend());
     }
 }

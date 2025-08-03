@@ -35,7 +35,20 @@ class EnderecoCustomerAddressExtensionEntity extends EnderecoBaseAddressExtensio
     protected ?CustomerAddressEntity $address = null;
 
     /**
+     * The constructor should not be used outside this class.
+     * Use the EnderecoCustomerAddressExtensionEntity::createWithDefaultValues
+     * or the EnderecoCustomerAddressExtensionEntity::createWithDefaultValuesFromAddress method instead.
+     * This ensures the integrate of the entity.
+     */
+    public function __construct() {}
+
+    /**
      * Creates a customer address extension instance with default values and proper unique identifier.
+     * The following properties are set:
+     * - address ID: as passed
+     * - unique identifier: previously set address ID
+     *
+     * ⚠️ The address is not set in the returned extension and has to be set manually.
      * 
      * @param string $addressId The customer address ID to associate with
      * @return EnderecoCustomerAddressExtensionEntity
@@ -45,6 +58,28 @@ class EnderecoCustomerAddressExtensionEntity extends EnderecoBaseAddressExtensio
         $addressExtension = new EnderecoCustomerAddressExtensionEntity();
         $addressExtension->setAddressId($addressId);
         $addressExtension->setUniqueIdentifier($addressId);
+
+        return $addressExtension;
+    }
+
+    /**
+     * Creates an order address extension instance with a random UUID and the default AMS data.
+     * The address ID and version ID are drawn from the passed address.
+     *
+     * The following properties are set:
+     * - address ID: as passed
+     * - unique identifier: previously set address ID
+     *
+     * ✅ The address is set in the returned extension and does not have to be set manually.
+     *
+     * @param CustomerAddressEntity $addressEntity
+     * @return EnderecoCustomerAddressExtensionEntity
+     */
+    public static function createWithDefaultValuesFromAddress(
+        CustomerAddressEntity $addressEntity
+    ): EnderecoCustomerAddressExtensionEntity {
+        $addressExtension = self::createWithDefaultValues($addressEntity->getId());
+        $addressExtension->setAddress($addressEntity);
 
         return $addressExtension;
     }
@@ -80,15 +115,21 @@ class EnderecoCustomerAddressExtensionEntity extends EnderecoBaseAddressExtensio
      * This method is used when converting customer addresses to order addresses during
      * the checkout process, ensuring all Endereco verification data is preserved.
      *
+     * ⚠️ The address is not set in the returned extension and has to be set manually
+     * if the method is used for other purposes.
+     *
+     * The following properties of the order address extension are set:
+     * - ID: random UUID
+     * - unique identifier: previously set ID
+     * - version ID: default live version ID (0fa91ce3e96a4bc2be4bd9ce752c3425)
+     * - address ID: as passed
+     *
      * @param string $orderAddressId The ID of the new order address to associate with
      * @return EnderecoOrderAddressExtensionEntity A new order address extension populated with this entity's data
      */
     public function createOrderAddressExtension(string $orderAddressId): EnderecoOrderAddressExtensionEntity
     {
-        $entity = new EnderecoOrderAddressExtensionEntity();
-        $entity->setId(Uuid::randomHex());
-        $entity->setUniqueIdentifier($entity->getId());
-        $entity->setAddressId($orderAddressId);
+        $entity = EnderecoOrderAddressExtensionEntity::createWithDefaultValues($orderAddressId, null);
         $entity->setAmsStatus($this->getAmsStatus());
         $entity->setAmsTimestamp($this->getAmsTimestamp());
         $entity->setAmsPredictions($this->getAmsPredictions());
@@ -109,6 +150,7 @@ class EnderecoCustomerAddressExtensionEntity extends EnderecoBaseAddressExtensio
         $this->setStreet($addressExtensionToSyncFrom->getStreet());
         $this->setHouseNumber($addressExtensionToSyncFrom->getHouseNumber());
         $this->setIsPayPalAddress($addressExtensionToSyncFrom->isPayPalAddress());
+        $this->setIsAmazonPayAddress($addressExtensionToSyncFrom->isAmazonPayAddress());
         $this->setAmsRequestPayload($addressExtensionToSyncFrom->getAmsRequestPayload());
         $this->setAmsStatus($addressExtensionToSyncFrom->getAmsStatus());
         $this->setAmsPredictions($addressExtensionToSyncFrom->getAmsPredictions());

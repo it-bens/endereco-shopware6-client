@@ -36,8 +36,25 @@ class EnderecoOrderAddressExtensionEntity extends EnderecoBaseAddressExtensionEn
     protected ?OrderAddressEntity $address = null;
 
     /**
+     * The constructor should not be used outside this class.
+     * Use the EnderecoOrderAddressExtensionEntity::createWithDefaultValues
+     * or the EnderecoOrderAddressExtensionEntity::createWithDefaultValuesFromAddress method instead.
+     * This ensures the integrate of the entity.
+     */
+    public function __construct() {}
+
+    /**
      * Creates an order address extension instance with a random UUID and the default AMS data.
      * An order address ID is mandatory. An order address version ID is optional.
+     *
+     * The following properties are set:
+     * - ID: random UUID
+     * - unique identifier: previously set ID
+     * - version ID: default live version ID (0fa91ce3e96a4bc2be4bd9ce752c3425)
+     * - address ID: as passed
+     * - address version ID: as passed, if passed
+     *
+     * ⚠️ The address is not set in the returned extension and has to be set manually.
      *
      * @param string $addressId
      * @param string|null $addressVersionId
@@ -55,6 +72,32 @@ class EnderecoOrderAddressExtensionEntity extends EnderecoBaseAddressExtensionEn
         if (is_string($addressVersionId)) {
             $addressExtension->setAddressVersionId($addressVersionId);
         }
+
+        return $addressExtension;
+    }
+
+    /**
+     * Creates an order address extension instance with a random UUID and the default AMS data.
+     * The address ID and version ID are drawn from the passed address.
+     *
+     * The following properties are set:
+     * - ID: random UUID
+     * - unique identifier: previously set ID
+     * - version ID: default live version ID (0fa91ce3e96a4bc2be4bd9ce752c3425)
+     * - address ID: from the passed address
+     * - address version ID: from the passed address
+     * - address: the passed address
+     *
+     * ✅ The address is set in the returned extension and does not have to be set manually.
+     *
+     * @param OrderAddressEntity $addressEntity
+     * @return EnderecoOrderAddressExtensionEntity
+     */
+    public static function createWithDefaultValuesFromAddress(
+        OrderAddressEntity $addressEntity
+    ): EnderecoOrderAddressExtensionEntity {
+        $addressExtension = self::createWithDefaultValues($addressEntity->getId(), $addressEntity->getVersionId());
+        $addressExtension->setAddress($addressEntity);
 
         return $addressExtension;
     }

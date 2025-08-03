@@ -20,13 +20,7 @@ use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use PHPUnit\Framework\MockObject\MockObject;
 
-/**
- * Integration tests for AddressExtensionExistsInsurance
- *
- * These tests ensure the insurance properly creates extensions that can be
- * processed by Shopware's collection system without getUniqueIdentifier errors.
- */
-class AddressExtensionExistsInsuranceTest extends TestCase
+final class AddressExtensionExistsInsuranceTest extends TestCase
 {
     private AddressExtensionExistsInsurance $insurance;
     /** @var EntityRepository<EnderecoCustomerAddressExtensionCollection>&MockObject */
@@ -41,17 +35,16 @@ class AddressExtensionExistsInsuranceTest extends TestCase
     }
 
     /**
-     * THE INTEGRATION KILLER TEST - This would have caught the getUniqueIdentifier bug
+     * Tests that extensions created by the service are compatible with Shopware collections.
      *
-     * Tests that the insurance creates extensions that can be processed by collections
-     * without throwing TypeError. This is the critical integration test.
+     * This is the critical integration test that prevents TypeError exceptions
+     * when extensions are processed by Shopware's collection system.
      */
-    public function testEnsureCreatesValidExtensionThatCanBeProcessedByCollections(): void
+    public function testEnsureCreatesCollectionCompatibleExtension(): void
     {
         $customerAddress = new CustomerAddressEntity();
-        $customerAddress->setId('customer-address-id');
+        $customerAddress->setId('integration-test-id');
 
-        // Mock repository to avoid database dependency
         $this->mockRepository
             ->expects($this->once())
             ->method('upsert')
@@ -59,74 +52,46 @@ class AddressExtensionExistsInsuranceTest extends TestCase
                 $this->callback(function ($data) {
                     $this->assertIsArray($data);
                     $this->assertCount(1, $data);
-                    $this->assertEquals('customer-address-id', $data[0]['addressId']);
+                    $this->assertEquals('integration-test-id', $data[0]['addressId']);
                     return true;
                 }),
                 $this->context
             );
 
-        // This calls createAddressExtensionWithDefaultValues internally
+        // Create extension through service
         $this->insurance->ensure($customerAddress, $this->context);
 
-        // Get the extension that was added to the customer address
+        // Get the created extension
         $extension = $customerAddress->getExtension(CustomerAddressExtension::ENDERECO_EXTENSION);
-
         $this->assertInstanceOf(EnderecoCustomerAddressExtensionEntity::class, $extension);
-        $this->assertEquals('customer-address-id', $extension->getAddressId());
 
-        // THE CRITICAL TEST: Extension must be processable by collections
+        // CRITICAL INTEGRATION TEST: Extension must work with Shopware collections
         $collection = new EnderecoCustomerAddressExtensionCollection();
-        // This would throw TypeError if getUniqueIdentifier() returns null
+        
+        // This was the source of the original TypeError - test it works
         $collection->add($extension);
 
         $this->assertCount(1, $collection);
-        $this->assertTrue($collection->has('customer-address-id'));
+        $this->assertTrue($collection->has('integration-test-id'));
+        $this->assertSame($extension, $collection->get('integration-test-id'));
     }
 
     /**
-     * Tests that createAddressExtensionWithDefaultValues creates valid extension
+     * Tests that the service works correctly when an extension already exists.
      *
-     * This tests the factory method directly to ensure it creates properly configured entities.
+     * Validates the integration scenario where addresses already have extensions
+     * and ensures the existing extension remains collection-compatible.
      */
-    public function testCreateAddressExtensionWithDefaultValuesHasUniqueIdentifier(): void
+    public function testEnsurePreservesExistingCollectionCompatibleExtension(): void
     {
         $customerAddress = new CustomerAddressEntity();
-        $customerAddress->setId('test-address-id');
+        $customerAddress->setId('existing-extension-id');
 
-        // Use reflection to access protected method
-        $reflection = new \ReflectionClass($this->insurance);
-        $method = $reflection->getMethod('createAddressExtensionWithDefaultValues');
-
-        $extension = $method->invoke($this->insurance, $customerAddress);
-
-        $this->assertInstanceOf(EnderecoCustomerAddressExtensionEntity::class, $extension);
-        $this->assertEquals('test-address-id', $extension->getAddressId());
-        $this->assertEquals('test-address-id', $extension->getUniqueIdentifier());
-        $this->assertSame($customerAddress, $extension->getAddress());
-
-        // Verify it can be added to collection
-        $collection = new EnderecoCustomerAddressExtensionCollection();
-        $collection->add($extension);
-
-        $this->assertCount(1, $collection);
-    }
-
-    /**
-     * Tests that ensure doesn't create extension if one already exists
-     *
-     * Validates the conditional creation logic.
-     */
-    public function testEnsureDoesNotCreateExtensionIfAlreadyExists(): void
-    {
-        $customerAddress = new CustomerAddressEntity();
-        $customerAddress->setId('customer-address-id');
-
-        // Add existing extension
-        $existingExtension = new EnderecoCustomerAddressExtensionEntity();
-        $existingExtension->setAddressId('customer-address-id');
+        // Create and add existing extension
+        $existingExtension = EnderecoCustomerAddressExtensionEntity::createWithDefaultValuesFromAddress($customerAddress);
         $customerAddress->addExtension(CustomerAddressExtension::ENDERECO_EXTENSION, $existingExtension);
 
-        // Repository should not be called
+        // Repository should not be called since extension exists
         $this->mockRepository
             ->expects($this->never())
             ->method('upsert');
@@ -136,124 +101,116 @@ class AddressExtensionExistsInsuranceTest extends TestCase
         // Should still have the original extension
         $extension = $customerAddress->getExtension(CustomerAddressExtension::ENDERECO_EXTENSION);
         $this->assertSame($existingExtension, $extension);
-    }
 
-    /**
-     * Tests that extension survives complete collection processing lifecycle
-     *
-     * This simulates the real-world scenario where extensions are processed through
-     * various collection operations that caused the original bug.
-     */
-    public function testExtensionSurvivesCollectionProcessing(): void
-    {
-        $customerAddress = new CustomerAddressEntity();
-        $customerAddress->setId('lifecycle-test-id');
-
-        $this->mockRepository
-            ->expects($this->once())
-            ->method('upsert');
-
-        // Create extension through insurance
-        $this->insurance->ensure($customerAddress, $this->context);
-        $extension = $customerAddress->getExtension(CustomerAddressExtension::ENDERECO_EXTENSION);
-
-        // Test various collection operations that could trigger getUniqueIdentifier
+        // Verify existing extension still works with collections
         $collection = new EnderecoCustomerAddressExtensionCollection();
+        $collection->add($extension);
 
-        // Add to collection - this was the original source of the TypeError
-        if ($extension instanceof EnderecoCustomerAddressExtensionEntity) {
-            $collection->add($extension);
-        }
         $this->assertCount(1, $collection);
-
-        // Iterate over collection
-        foreach ($collection as $key => $item) {
-            $this->assertEquals('lifecycle-test-id', $key);
-            $this->assertSame($extension, $item);
-        }
-
-        // Filter collection
-        $filtered = $collection->filter(function ($ext) {
-            return $ext->getAmsStatus() === 'not-checked';
-        });
-        $this->assertCount(1, $filtered);
-
-        // Access by key
-        $retrieved = $collection->get('lifecycle-test-id');
-        $this->assertSame($extension, $retrieved);
-
-        // Test has() method
-        $this->assertTrue($collection->has('lifecycle-test-id'));
+        $this->assertTrue($collection->has('existing-extension-id'));
     }
 
     /**
-     * Tests that multiple addresses can have extensions created
+     * Tests integration scenario with multiple addresses and extensions.
      *
-     * Validates behavior with multiple customer addresses.
+     * Validates that multiple extensions created by the service can coexist
+     * in the same collection without conflicts.
      */
-    public function testEnsureWorksForMultipleAddresses(): void
+    public function testMultipleExtensionsWorkInSameCollection(): void
     {
         $address1 = new CustomerAddressEntity();
-        $address1->setId('address-1');
-
+        $address1->setId('multi-address-1');
+        
         $address2 = new CustomerAddressEntity();
-        $address2->setId('address-2');
+        $address2->setId('multi-address-2');
 
         $this->mockRepository
             ->expects($this->exactly(2))
             ->method('upsert');
 
+        // Create extensions for both addresses
         $this->insurance->ensure($address1, $this->context);
         $this->insurance->ensure($address2, $this->context);
 
         $extension1 = $address1->getExtension(CustomerAddressExtension::ENDERECO_EXTENSION);
         $extension2 = $address2->getExtension(CustomerAddressExtension::ENDERECO_EXTENSION);
 
-        $this->assertInstanceOf(EnderecoCustomerAddressExtensionEntity::class, $extension1);
-        $this->assertInstanceOf(EnderecoCustomerAddressExtensionEntity::class, $extension2);
-
-        // Both should work in the same collection
+        // Both extensions should work in the same collection
         $collection = new EnderecoCustomerAddressExtensionCollection();
         $collection->add($extension1);
         $collection->add($extension2);
 
         $this->assertCount(2, $collection);
-        $this->assertTrue($collection->has('address-1'));
-        $this->assertTrue($collection->has('address-2'));
+        $this->assertTrue($collection->has('multi-address-1'));
+        $this->assertTrue($collection->has('multi-address-2'));
+        $this->assertSame($extension1, $collection->get('multi-address-1'));
+        $this->assertSame($extension2, $collection->get('multi-address-2'));
     }
 
     /**
-     * Tests that created extensions have proper default values
+     * Tests that extensions work with collection iteration patterns.
      *
-     * Validates the default state of created extensions.
+     * Validates compatibility with common collection usage patterns that
+     * rely on getUniqueIdentifier() working correctly.
      */
-    public function testCreatedExtensionHasProperDefaultValues(): void
+    public function testExtensionWorksWithCollectionIteration(): void
     {
         $customerAddress = new CustomerAddressEntity();
-        $customerAddress->setId('defaults-test-id');
+        $customerAddress->setId('iteration-test-id');
 
         $this->mockRepository
             ->expects($this->once())
-            ->method('upsert')
-            ->with(
-                $this->callback(function ($data) {
-                    $extensionData = $data[0];
-                    $this->assertEquals('defaults-test-id', $extensionData['addressId']);
-                    $this->assertEquals('not-checked', $extensionData['amsStatus']);
-                    $this->assertEquals([], $extensionData['amsPredictions']);
-                    return true;
-                }),
-                $this->context
-            );
+            ->method('upsert');
 
         $this->insurance->ensure($customerAddress, $this->context);
-
         $extension = $customerAddress->getExtension(CustomerAddressExtension::ENDERECO_EXTENSION);
 
-        $this->assertInstanceOf(EnderecoCustomerAddressExtensionEntity::class, $extension);
-        $this->assertEquals('defaults-test-id', $extension->getAddressId());
-        $this->assertEquals('not-checked', $extension->getAmsStatus());
-        $this->assertEquals([], $extension->getAmsPredictions());
-        $this->assertSame($customerAddress, $extension->getAddress());
+        $collection = new EnderecoCustomerAddressExtensionCollection();
+        $collection->add($extension);
+
+        // Test iteration - this internally uses getUniqueIdentifier()
+        $iteratedItems = [];
+        foreach ($collection as $key => $item) {
+            $iteratedItems[$key] = $item;
+        }
+
+        $this->assertCount(1, $iteratedItems);
+        $this->assertArrayHasKey('iteration-test-id', $iteratedItems);
+        $this->assertSame($extension, $iteratedItems['iteration-test-id']);
+    }
+
+    /**
+     * Tests collection filtering functionality with created extensions.
+     *
+     * Validates that extensions work correctly with collection filter operations
+     * that are commonly used in business logic.
+     */
+    public function testExtensionWorksWithCollectionFiltering(): void
+    {
+        $customerAddress = new CustomerAddressEntity();
+        $customerAddress->setId('filter-test-id');
+
+        $this->mockRepository
+            ->expects($this->once())
+            ->method('upsert');
+
+        $this->insurance->ensure($customerAddress, $this->context);
+        $extension = $customerAddress->getExtension(CustomerAddressExtension::ENDERECO_EXTENSION);
+
+        $collection = new EnderecoCustomerAddressExtensionCollection();
+        $collection->add($extension);
+
+        // Test filtering - should work without errors
+        $notCheckedExtensions = $collection->filter(function ($ext) {
+            return $ext->getAmsStatus() === 'not-checked';
+        });
+
+        $this->assertCount(1, $notCheckedExtensions);
+        
+        $checkedExtensions = $collection->filter(function ($ext) {
+            return $ext->getAmsStatus() === 'checked';
+        });
+
+        $this->assertCount(0, $checkedExtensions);
     }
 }

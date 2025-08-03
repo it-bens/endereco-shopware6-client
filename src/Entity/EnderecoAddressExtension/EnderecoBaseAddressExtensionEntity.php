@@ -62,6 +62,21 @@ abstract class EnderecoBaseAddressExtensionEntity extends Entity
     protected string $houseNumber = '';
 
     /**
+     * Override getUniqueIdentifier to ensure consistent behavior with Shopware's collection system.
+     * Uses addressId as a fallback if the the unique identifier wasn't explicitly set.
+     * This prevents TypeError when the entity is processed through collections before database hydration,
+     * while preserving keys that are set by Shopware explicitly and might differ from the default.
+     */
+    public function getUniqueIdentifier(): string
+    {
+        if (isset($this->_uniqueIdentifier)) {
+            return $this->_uniqueIdentifier;
+        }
+
+        return $this->addressId;
+    }
+
+    /**
      * Get address ID.
      *
      * @return string The ID of the associated address.
