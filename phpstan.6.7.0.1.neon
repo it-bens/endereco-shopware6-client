@@ -1,6 +1,8 @@
 includes:
    - ./phpstan-baseline.neon
+   - ./phpstan-disallow-calls.neon
    - ./vendor/shopwarelabs/phpstan-shopware/rules.neon
+   - ./vendor/spaze/phpstan-disallowed-calls/extension.neon
 
 parameters:
     level: 8
