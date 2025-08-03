@@ -1,0 +1,4 @@
+Implement a unit test class for the "{{ full or expressive part of the fully qualified class name }}" class.
+
+IF TESTS ARE NOT EXECUTED AUTOMATICALLY:
+Run the test and check the coverage.

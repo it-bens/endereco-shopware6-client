@@ -1,0 +1,233 @@
+PROTOCOL_VERSION: 1.0
+AI_MODEL: Claude_4_Sonnet
+PROJECT: Endereco_Shopware_6_Client
+PHPUNIT_VERSION: 12
+
+## RULE_APPLICATION_DIRECTIVE
+APPLY_MODE: POST_CREATION_UNIFICATION
+PROCESSING_ORDER: SEQUENTIAL
+CONFLICT_RESOLUTION: LATEST_RULE_WINS
+VALIDATION: STRICT
+
+## TESTING_STRATEGIES
+
+### TS001_DATA_PROVIDER_THRESHOLD
+CONDITION: input_variations >= 3
+ACTION: implement_data_provider
+STRUCTURE:
+```php
+#[DataProvider('{contextName}Provider')]
+public function test{MethodName}({paramTypes}): void
+```
+PROVIDER_PATTERN:
+```php
+public static function {contextName}Provider(): Generator
+{
+    yield '{descriptiveKey}' => [{params}];
+}
+```
+
+### TS002_INLINE_DATA
+CONDITION: unique_scenario OR complex_object_setup
+ACTION: inline_implementation
+PROHIBITION: data_provider
+
+### TS003_MOCK_VS_STUB
+MOCK_CONDITION: method_call_verification_required
+MOCK_IMPLEMENTATION: createMock() + expects()
+STUB_CONDITION: !method_call_verification_required
+STUB_IMPLEMENTATION: createStub() + method()->willReturn()
+
+### TS004_TYPE_INTERSECTION
+PATTERN: {Interface}&MockObject
+MANDATORY: all_mock_stub_properties
+
+## METHOD_NAMING
+
+### MN001_TEST_METHOD
+PATTERN: ^test[A-Z][a-zA-Z]*$
+STRUCTURE: test{What}{Condition}{ExpectedResult}
+VALIDATION_REGEX: /^test[A-Z][a-zA-Z]+$/
+
+### MN002_DATA_PROVIDER
+PATTERN: ^[a-z][a-zA-Z]*Provider$
+VISIBILITY: public static
+RETURN_TYPE: Generator
+
+### MN003_DOMAIN_PROVIDER
+REQUIREMENT: include_domain_context
+PATTERN: {domainContext}Provider
+PROHIBITION: generic_names=['dataProvider','testDataProvider']
+
+## VARIABLE_NAMING
+
+### VN001_MOCK_STUB
+MOCK_PATTERN: ${serviceName}Mock
+STUB_PATTERN: ${serviceName}Stub
+PROHIBITION: mock_prefix
+
+### VN002_FIXTURE
+PATTERN: ${descriptiveEntity}
+REQUIRED_SPECIFICITY: entity_type_included
+
+### VN003_ASSERTION_ORDER
+PATTERN: assertSame($expected, $actual)
+COLLECTION_PATTERN: ${expected|actual}Items
+
+## CODE_REUSE
+
+### CR001_SETUP_EXTRACTION
+TRIGGER: shared_setup_count >= 3
+LOCATION: setUp()
+INCLUDE: [mock_creation, stub_creation, common_entities]
+EXCLUDE: [test_specific_data]
+
+### CR002_FACTORY_METHOD
+PATTERN: create{Entity}({params}): {Entity}
+VISIBILITY: private
+POSITION: after_test_methods && before_data_providers
+
+### CR003_HELPER_EXTRACTION
+TRIGGER: operation_count >= 2
+PATTERN: setup{Operation}(): void
+GROUPING: comment_header_required
+
+### CR004_NAMING_VALIDATION
+VALID_PATTERNS: [setup{Context}(), create{Entity}WithExtension(), assert{Entity}Has{Property}()]
+INVALID_PATTERNS: [setup(), create(), helper()]
+
+## TYPE_HINTS
+
+### TH001_TEST_RETURN
+MANDATORY: void
+APPLIES_TO: [test_methods, setUp, tearDown]
+
+### TH002_PROVIDER_RETURN
+FORMAT: Generator<string, array{type1, type2, ...}>
+DOCUMENTATION: @return required
+
+### TH003_PROPERTY_TYPES
+MOCK_STUB: {Interface}&MockObject
+REGULAR: {Interface}|{Class}
+
+## CODE_STRUCTURE
+
+### CF001_PSR12
+INDENT: 4_spaces
+MAX_LINE: 120
+BLANK_LINES: 1_between_methods
+BRACE_POSITION: same_line
+
+### CF002_MULTILINE
+PATTERN:
+```php
+->expects($this->once())
+    ->method('{name}')
+    ->with({params})
+    ->willReturn({value});
+```
+
+## METHOD_ORGANIZATION
+
+### MO001_CLASS_STRUCTURE
+ORDER:
+1. properties_with_types
+2. setUp(): void
+3. tearDown(): void [optional]
+4. test_methods_grouped_by_feature
+5. data_providers
+6. factory_methods
+7. helper_methods
+
+### MO002_GROUPING
+SEPARATOR: // Tests for {feature}
+SPACING: 1_blank_line_before
+
+### MO003_TEST_ORDER
+SEQUENCE:
+1. simple_state_getters
+2. core_business_logic
+3. edge_cases_errors
+4. integration_tests
+
+## DOCUMENTATION
+
+### DC001_TEST_DOC
+CONDITION: name_insufficient
+FORMAT: PHPDoc
+CONTENT: specific_behavior
+
+### DC002_PROVIDER_DOC
+MANDATORY: @return with_complete_type
+INCLUDE: parameter_descriptions
+
+### DC003_HELPER_DOC
+MANDATORY: all_private_helpers
+INCLUDE: [purpose, side_effects, assumptions]
+
+## TRANSFORMATION_RULES
+
+### TR001_UNIFICATION_SEQUENCE
+1. SCAN: identify_all_test_methods
+2. CATEGORIZE: by_feature_tested
+3. APPLY: naming_conventions
+4. EXTRACT: common_setup_patterns
+5. STANDARDIZE: assertion_patterns
+6. ORGANIZE: method_order
+7. VALIDATE: all_rules_compliance
+
+### TR002_MOCK_STANDARDIZATION
+REPLACE: createMock() WHERE !expects_used WITH createStub()
+RENAME: all_mock_variables TO {service}Mock|Stub
+ADD: intersection_types TO all_mock_properties
+
+### TR003_DATA_PROVIDER_CONVERSION
+IDENTIFY: repeated_test_patterns
+EXTRACT: variable_data
+CREATE: Generator_based_provider
+LINK: #[DataProvider] attribute
+
+### TR004_HELPER_CONSOLIDATION
+IDENTIFY: duplicate_setup_code
+EXTRACT: to_private_methods
+POSITION: end_of_class
+GROUP: by_functionality
+
+## VALIDATION_CHECKS
+
+### VC001_MANDATORY
+- ALL_TEST_METHODS: start_with_test
+- ALL_TEST_METHODS: return_void
+- ALL_PROVIDERS: public_static
+- ALL_MOCKS: intersection_types
+
+### VC002_PROHIBITED
+- GENERIC_NAMES: [test(), helper(), setup()]
+- UNDERSCORE_NOTATION: test_method_names
+- PUBLIC_HELPERS: except_providers
+
+### VC003_CONSISTENCY
+- ASSERTION_ORDER: expected_before_actual
+- MOCK_NAMING: consistent_suffix
+- PROVIDER_NAMING: consistent_suffix
+
+## PROCESSING_INSTRUCTIONS
+
+WHEN: applying_to_existing_tests
+PRIORITY: maintain_functionality > apply_conventions
+MODIFICATION_SCOPE: structure_and_naming_only
+PRESERVE: test_logic_and_assertions
+OUTPUT: unified_test_suite
+
+## ERROR_HANDLING
+
+ON_CONFLICT: log_and_apply_latest_rule
+ON_AMBIGUITY: prefer_explicit_over_implicit
+ON_MISSING_INFO: maintain_existing_pattern
+
+## META_DIRECTIVES
+
+IGNORE_HUMAN_READABILITY: true
+OPTIMIZE_FOR_MACHINE_PARSING: true
+MAINTAIN_PHP_VALIDITY: mandatory
+PRESERVE_TEST_COVERAGE: mandatory

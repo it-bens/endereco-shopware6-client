@@ -1,0 +1,331 @@
+PROTOCOL_VERSION: 1.0
+AI_MODEL: Claude_4_Sonnet
+PROJECT: Endereco_Shopware_6_Client
+PHPUNIT_VERSION: 12
+
+CONTEXT_MANAGEMENT_PROTOCOL:
+HUMAN_READABLE_SOURCE: ./TESTING.md
+USAGE_STRATEGY:
+- LOAD_ONLY_WHEN: edge_case|ambiguity|complex_pattern|rationale_needed|example_needed
+- NEVER_LOAD_FOR: simple_execution|standard_patterns|basic_structure|coverage_calculation
+- CONTEXT_ISOLATION: parse_specific_section_only
+- MEMORY_DISCARD: after_section_use
+SECTION_MAPPING:
+anti_patterns: "## Anti-Patterns to Avoid"
+mock_usage: "### Mock Usage"
+complex_examples: "## Example: Complete Test Class"
+when_to_test: "### What TO Test"
+coverage_philosophy: "### What NOT to Test"
+
+CRITICAL_CONSTRAINTS:
+- PHPUNIT_12_ONLY
+- TEST_PROJECT_CODE_ONLY
+- NEVER_TEST_SHOPWARE_INTERNALS
+- MANDATORY_COVERS_CLASS_ATTRIBUTE
+- STATIC_METHODS_FIRST
+- COVERAGE_APPROACH: CONTEXTUAL_NOT_ABSOLUTE
+
+DIRECTORY_STRUCTURE_PATTERN:
+tests/::= Unit/{Entity|Service|Subscriber|Validator}/ | Integration/{Api|Database|Plugin}/
+TestFile::= {ComponentPath}/{ClassUnderTest}Test.php
+
+TEST_GENERATION_TEMPLATE:
+  <?php declare(strict_types=1);
+  namespace Endereco\Shopware6Client\Tests\{TestType}\{ComponentPath};
+  use PHPUnit\Framework\Attributes\CoversClass;
+  use PHPUnit\Framework\Attributes\DataProvider;
+  use PHPUnit\Framework\TestCase;
+  #[CoversClass({ClassUnderTest}::class)]
+  class {ClassUnderTest}Test extends TestCase {
+    // STATIC_PROVIDERS_FIRST
+    // TEST_METHODS_SECOND
+    // COVERAGE_FOCUS: critical_business_logic_first
+    // PRAGMATIC: skip_trivial_unless_risk_exists
+  }
+
+METHOD_NAMING_PATTERN:
+  TestMethod::= test{WhatIsBeingTested}{UnderWhatConditions}
+  DataProvider::= {descriptiveAction}Provider
+  MANDATORY_PHPDOC: /** Tests that {behavior} when {condition}. {Context_2-3_sentences}. */
+  Coverage_note: // @codeCoverageIgnore with justification if skipping
+
+ANTI_PATTERNS_PRIORITY_1:
+  1. NEVER_test_implementation_details: test_behavior_not_internals
+  2. NEVER_over_specify: minimal_assertions_for_behavior
+  3. NEVER_test_framework: assume_framework_works
+  4. NEVER_test_simple_delegation: unless_contains[validation|error_handling|logging|transformation|conditional_logic|data_manipulation]
+  5. NEVER_chase_coverage_metrics: quality_over_quantity
+  PATTERN_EXAMPLES: load_from_TESTING.md_when_pattern_unclear
+
+ASSERTION_RULES:
+  MANDATORY_STRICT:
+    - assertSame() >> assertEquals()
+    - assertCount() >> assertEquals(count())
+    - assertIsType() >> assertTrue(is_type())
+  TYPE_SPECIFIC_ALWAYS
+  COVERAGE_ASSERTIONS:
+    - focus_on_behavior_not_lines
+    - one_logical_assertion_per_behavior
+    - multiple_assertions_ok_if_cohesive
+
+STUB_MOCK_DECISION_TREE:
+  IF need_return_value_only: USE createStub()
+  ELSEIF need_verify_calls: USE createMock()
+  ELSEIF need_parameter_assertions: USE createMock() + with() + callback()
+  ELSEIF testing_Shopware_component: ALWAYS_use_double
+  ELSEIF cost_of_real_object_high: use_double
+  ELSEIF real_object_simple_and_fast: consider_real_object
+  ELSE: CHECK_TESTING.md#stubs-and-mocks
+
+INTELLIGENT_COVERAGE_STRATEGY:
+  COVERAGE_PHILOSOPHY:
+    principle: "Test what matters, not what's measurable"
+    approach: CONTEXT_DRIVEN_NOT_METRIC_DRIVEN
+    
+  CONTEXTUAL_FACTORS:
+    business_criticality:
+      HIGH: payment_processing|security|data_integrity|validation → target_95%+
+      MEDIUM: user_features|reporting|integration|transformation → target_80%+
+      LOW: logging|formatting|simple_getters|admin_interfaces → target_as_reasonable
+      
+    code_complexity:
+      HIGH: multiple_branches|state_management|algorithms → maximize_path_coverage
+      MEDIUM: simple_conditionals|basic_validation → cover_key_paths
+      LOW: linear_flow|delegation_only → minimal_sufficient
+      
+    change_frequency:
+      HIGH: frequently_modified|bug_prone → comprehensive_coverage
+      MEDIUM: stable_with_occasional_changes → standard_coverage
+      LOW: rarely_touched|well_tested_legacy → maintain_existing
+      
+    risk_assessment:
+      DATA_LOSS_RISK: maximum_coverage
+      SECURITY_RISK: exhaustive_testing
+      USER_EXPERIENCE: reasonable_coverage
+      INTERNAL_ONLY: pragmatic_approach
+  
+  ACCEPTABLE_GAPS:
+    - simple_accessors[@codeCoverageIgnore]: if_no_logic
+    - framework_delegations: if_no_added_logic
+    - auto_generated_code: if_no_customization
+    - deprecation_paths: if_removal_planned
+    - debug_development_code: if_clearly_marked
+    - backward_compatibility: if_temporary
+    
+  UNCOVERED_CODE_CLASSIFICATION:
+    CRITICAL_GAP: uncovered && HIGH_CRITICALITY
+    ACCEPTABLE_GAP: uncovered && (LOW_CRITICALITY || ACCEPTABLE_GAPS)
+    TECHNICAL_DEBT: uncovered && MEDIUM_CRITICALITY
+    
+  PRIORITY_COVERAGE:
+    1. Money/payment_related
+    2. User_data_handling
+    3. Business_rule_implementation
+    4. Integration_points
+    5. Complex_algorithms
+
+SHOPWARE_INHERITANCE_REQUIREMENTS:
+  MANDATORY_TESTS:
+    - unique_identifier_setting_for_collections
+    - required_method_implementations
+    - event_handling_compatibility
+    - entity_name_non_empty
+  CHECK_PARENT_FOR: constructor_params|return_types|initialized_properties
+  ALWAYS_MOCK: EntityRepository|EventDispatcher|SystemConfigService
+  NEVER_TEST: DAL_operations|Event_system|Plugin_lifecycle
+  FOCUS_ON: Your_business_logic_interaction_with_shopware
+
+DATA_PROVIDER_RULES:
+  USE_WHEN: test_cases >= 3 || same_logic_different_inputs
+  GENERATOR_WHEN: dataset_size > 10 || memory_intensive
+  FORMAT: yield 'descriptive_name' => [param1, param2, expected];
+  TYPE_ANNOTATION_REQUIRED: @return \Generator<string, array{paramTypes}>
+  COVERAGE_BENEFIT: efficient_path_exploration
+  PRAGMATIC: dont_overdo_edge_cases_unless_critical
+
+PARAMETER_CONSTRAINT_PATTERNS:
+  EXACT: equalTo()|identicalTo()
+  TYPE: isInstanceOf()|isType()
+  STRUCTURE: arrayHasKey()|callback()
+  NUMERIC: greaterThan()|lessThan()
+  STRING: stringContains()|matchesRegularExpression()
+  COMBINE: logicalAnd()|logicalOr()
+  NEVER_CALLED: never()
+  MOCK_VERIFICATION_FOCUS: verify_critical_parameters_only
+
+ERROR_CONDITION_TESTING:
+  PRIORITY_BASED_COVERAGE:
+    critical_always:
+      - data_corruption_paths
+      - security_vulnerabilities
+      - payment_failures
+    important_usually:
+      - user_facing_errors
+      - integration_failures
+      - validation_errors
+    optional_context_dependent:
+      - logging_failures
+      - performance_degradation
+      - cosmetic_issues
+
+EXECUTION_DIRECTIVES:
+  STEP_1_ANALYZE_CODE:
+    - IDENTIFY: class_under_test
+    - EXTRACT: public_methods|business_logic|dependencies
+    - CLASSIFY: criticality_level[HIGH|MEDIUM|LOW]
+    - DETECT: shopware_inheritance|validation|transformation
+    - ASSESS: code_complexity|change_frequency|risk_level
+  
+  STEP_2_GENERATE_TESTS:
+    - APPLY: TEST_GENERATION_TEMPLATE
+    - FOLLOW: METHOD_NAMING_PATTERN
+    - IMPLEMENT: coverage_based_on_criticality
+    - MOCK: all_shopware_dependencies
+    - USE: data_providers_for_variants
+    - PRIORITIZE: critical_paths_first
+  
+  STEP_3_EXECUTE_WITH_COVERAGE:
+    COMMAND: php -dxdebug.mode=coverage vendor/bin/phpunit {test_file} --coverage-text --coverage-clover=coverage.xml
+    PARSE: coverage_percentage|uncovered_lines|covered_methods
+    ANALYZE: against_INTELLIGENT_COVERAGE_STRATEGY
+  
+  STEP_4_CONTEXTUAL_EVALUATION:
+    IF coverage < required_for_criticality:
+      IDENTIFY: uncovered_critical_paths
+      CLASSIFY: gap_severity
+      ASSESS: risk_and_complexity
+      DECIDE: test_vs_accept_gap
+      GENERATE: additional_tests_if_CRITICAL_GAP
+    ELSE:
+      VALIDATE: all_critical_paths_covered
+      DOCUMENT: acceptable_gaps_rationale
+  
+  STEP_5_OUTPUT_RESULTS:
+    FORMAT: YAML_STRUCTURED_OUTPUT
+    INCLUDE: contextual_recommendations
+    TRACK: decision_log
+
+YAML_STRUCTURED_OUTPUT:
+  test_execution:
+    status: pass|fail
+    runtime: {seconds}
+    assertions: {count}
+    failures: {count}
+    errors: {count}
+  
+  coverage_analysis:
+    raw_percentage: {percent}
+    business_criticality: HIGH|MEDIUM|LOW
+    contextual_adequacy: SUFFICIENT|NEEDS_IMPROVEMENT|CRITICAL_GAPS
+    
+    contextual_metrics:
+      critical_code_coverage: {percent}
+      risk_weighted_coverage: {percent}
+      business_logic_coverage: {percent}
+      trivial_code_excluded: {lines}
+    
+  uncovered_analysis:
+    critical_gaps:
+      - class: {name}
+        method: {name}
+        risk_level: HIGH|MEDIUM|LOW
+        business_impact: {description}
+        recommendation: MUST_TEST|SHOULD_TEST|OPTIONAL
+        
+    acceptable_gaps:
+      - class: {name}
+        method: {name}
+        reason: simple_accessor|framework_delegation|no_logic
+        risk_assessment: {justification}
+  
+  quality_metrics:
+    test_effectiveness: {ratio_of_meaningful_tests}
+    assertion_quality: {behavior_vs_implementation_ratio}
+    mock_appropriateness: {justified_mocks_ratio}
+    
+  risk_assessment:
+    overall_risk: LOW|MEDIUM|HIGH
+    rationale: {context_based_reasoning}
+    
+  recommendations:
+    immediate_actions: []  # HIGH risk items
+    future_improvements: []  # MEDIUM risk items
+    technical_debt: []  # LOW risk but should track
+    
+  decision_log:
+    - component: {name}
+      decision: skipped|partial|full
+      justification: {reason}
+    
+  human_readable_refs:
+    consulted_sections: []  # Only if TESTING.md was loaded
+    complex_patterns_found: []  # Patterns requiring human context
+
+SELECTIVE_TESTING_MD_REFERENCE:
+  ANTI_PATTERN_EXAMPLES: lazy_load_from_TESTING.md#anti-patterns-to-avoid
+  COMPLEX_MOCK_EXAMPLES: see_TESTING.md#testing-service-calls-with-parameter-assertions
+  INHERITANCE_EDGE_CASES: check_TESTING.md#shopware-class-inheritance-requirements
+  FULL_EXAMPLE_CLASS: reference_TESTING.md#example-complete-test-class
+  IF_UNCERTAIN: CHECK_TESTING.md#{relevant_section}
+
+COMMAND_REFERENCE:
+  test_all: composer test
+  test_unit: composer test-unit | phpunit --testsuite=unit
+  test_integration: composer test-integration | phpunit --testsuite=integration
+  test_specific: ./vendor/bin/phpunit {path_or_filter}
+  coverage_html: php -dxdebug.mode=coverage vendor/bin/phpunit --coverage-html tests/coverage
+  coverage_text: composer test-coverage-unit
+  coverage_with_details: ./vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml --testdox-text=testdox.txt
+
+INTELLIGENT_REFERENCE_PROTOCOL:
+  WHEN_ENCOUNTERING_AMBIGUITY:
+    1. ATTEMPT: resolve_with_current_rules
+    2. IF_UNCERTAIN:
+       - LOAD: specific_section_from_TESTING.md
+       - EXTRACT: relevant_pattern_or_example
+       - APPLY: to_current_context
+       - UNLOAD: human_readable_content
+    3. CONTINUE: with_execution
+
+COVERAGE_EXCEPTION_HANDLING:
+  INTELLIGENT_EXCLUSIONS:
+    document_why_not_what:
+      - // Not testing: Simple getter with no logic
+      - // Covered by integration test: XYZ
+      - // Framework responsibility: Shopware handles this
+    temporary_exclusions:
+      - // TODO: Needs test after refactoring
+      - // DEBT: Complex to test, scheduled for Q2
+    permanent_exclusions:
+      - // Development only: Never runs in production
+      - // Deprecated: Removal in version 2.0
+
+VALIDATION_CHECKLIST:
+  QUALITY_CHECKS:
+    □ Critical_paths_tested: business_logic_covered
+    □ Risk_areas_covered: security_payment_data
+    □ Behavior_focused: not_implementation_tied
+    □ Maintainable_tests: clear_and_stable
+    □ Pragmatic_coverage: not_chasing_metrics
+    □ Human_readable_consulted: only_when_needed
+    □ Decisions_documented: gaps_justified
+
+OPTIMIZATION_RULES:
+  NEVER_load_entire_TESTING.md
+  EXTRACT_only_specific_sections_when_needed
+  PREFER_pattern_matching_over_examples
+  USE_decision_trees_not_prose
+  DISCARD_context_after_use
+  GENERATE_then_validate_not_perfect_first_time
+  CACHE_only_pattern_names_not_content
+
+SUCCESS_CRITERIA:
+  - critical_code_tested: true
+  - business_logic_covered: true
+  - risk_areas_addressed: true
+  - tests_maintainable: true
+  - decisions_documented: true
+  - gaps_in_trivial_code: ACCEPTABLE
+  - gaps_with_justification: ACCEPTABLE
+  - untested_critical_code: NOT_ACCEPTABLE
+  - poor_test_quality: NOT_ACCEPTABLE
