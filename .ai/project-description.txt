@@ -1,0 +1,11 @@
+Endereco Shopware 6 Client is an address validation and management plugin for Shopware 6 e-commerce platforms. This plugin integrates Endereco's Address Management Services (AMS) to provide real-time address validation, correction, and autocomplete functionality throughout the customer journey.
+
+The plugin validates customer addresses as they type, preventing incorrect data entry and automatically fixing minor address issues without user intervention. When addresses need correction, it provides suggestions to guide customers. The autocomplete functionality covers postal codes, cities, streets, and house numbers, making address entry faster and more accurate. Beyond addresses, the plugin also validates and standardizes names, email addresses, and phone numbers. It seamlessly integrates with payment providers, validating addresses from PayPal Express and Amazon Pay. For optimal performance, it includes a CORS-free storefront API proxy.
+
+The technical implementation maintains separate branches for Shopware 6.4, 6.5, and 6.6 compatibility. Code quality is ensured through PSR-12 compliance, PHPStan Level 8 analysis, a QA pipeline with PHPMD, and PHPUnit test coverage. The frontend uses ES6+ JavaScript with Babel transpilation, Webpack bundling, and ESLint for code quality, built on the @endereco/js-sdk. Performance is optimized through context resolver optimization and efficient caching strategies.
+
+The architecture follows service-oriented principles with clear separation of concerns through dedicated services for validation, correction, and data integrity. It uses Shopware's event system for seamless integration and offers configuration options for multi-channel setups. Database extensions store validation metadata without impacting core Shopware tables.
+
+Development features include AI-friendly context documentation and contribution guidelines. An automated QA pipeline ensures code stability, with testing across Shopware versions 6.6.0.0 to 6.6.10.4. The plugin handles installation, update, and uninstallation processes cleanly.
+
+This plugin is for Shopware 6 merchants who want to improve data quality, reduce shipping errors, and enhance the customer checkout experience through address management.
