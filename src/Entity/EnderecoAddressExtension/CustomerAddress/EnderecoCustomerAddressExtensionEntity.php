@@ -62,11 +62,11 @@ class EnderecoCustomerAddressExtensionEntity extends EnderecoBaseAddressExtensio
     /**
      * Set the associated customer address entity.
      *
-     * @param CustomerAddressEntity|null $address The associated customer address entity to set.
+     * @param Entity|null $address The associated customer address entity to set.
      */
     public function setAddress(?Entity $address): void
     {
-        if (!$address instanceof CustomerAddressEntity) {
+        if ($address !== null && !$address instanceof CustomerAddressEntity) {
             throw new \InvalidArgumentException('The address must be an instance of CustomerAddressEntity.');
         }
 
